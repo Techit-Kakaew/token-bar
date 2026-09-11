@@ -4,7 +4,7 @@
 <dict>
     <key>CFBundleName</key><string>TokenBar</string>
     <key>CFBundleDisplayName</key><string>TokenBar</string>
-    <key>CFBundleIdentifier</key><string>dev.techit.tokenbar</string>
+    <key>CFBundleIdentifier</key><string>dev.techit.tokenbar.app</string>
     <key>CFBundleVersion</key><string>2</string>
     <key>CFBundleShortVersionString</key><string>0.1.1</string>
     <key>CFBundleExecutable</key><string>TokenBar</string>

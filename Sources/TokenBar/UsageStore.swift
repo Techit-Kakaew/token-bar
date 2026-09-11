@@ -46,7 +46,21 @@ final class UsageStore: ObservableObject {
     private var timer: Timer?
     private var bag = Set<AnyCancellable>()
 
+    /// One-time copy of settings from the pre-0.2 bundle id (dev.techit.tokenbar).
+    private static func migrateDefaultsIfNeeded() {
+        let d = UserDefaults.standard
+        guard d.object(forKey: "migrated.v1") == nil else { return }
+        if let old = UserDefaults(suiteName: "dev.techit.tokenbar") {
+            for (k, v) in old.dictionaryRepresentation() where k.hasPrefix("break.") || k.hasPrefix("limit.")
+                || ["window", "appearance", "showNumberInBar", "menuBarProvider"].contains(k) {
+                if d.object(forKey: k) == nil { d.set(v, forKey: k) }
+            }
+        }
+        d.set(true, forKey: "migrated.v1")
+    }
+
     init() {
+        Self.migrateDefaultsIfNeeded()
         if let w = UserDefaults.standard.string(forKey: "window"), let win = Window(rawValue: w) {
             window = win
         }
