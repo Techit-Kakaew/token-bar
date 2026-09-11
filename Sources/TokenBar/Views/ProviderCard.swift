@@ -30,7 +30,7 @@ struct ProviderCard: View {
         .padding(12)
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(.white.opacity(0.04))
+                .fill(.primary.opacity(0.04))
                 .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(color.opacity(0.25), lineWidth: 1))
         )
         .contentShape(Rectangle())
@@ -71,7 +71,7 @@ struct ProviderCard: View {
                         .lineLimit(1).minimumScaleFactor(0.7)
                     GeometryReader { geo in
                         ZStack(alignment: .leading) {
-                            Capsule().fill(.white.opacity(0.08))
+                            Capsule().fill(.primary.opacity(0.08))
                             Capsule().fill(gaugeColor(lim.percent))
                                 .frame(width: max(3, geo.size.width * CGFloat(min(lim.percent, 100)) / 100))
                         }
@@ -142,8 +142,8 @@ struct ProviderCard: View {
                 HStack(spacing: 1.5) {
                     seg(bd.input, t, geo.size.width, color)
                     seg(bd.output, t, geo.size.width, color.opacity(0.7))
-                    seg(bd.cacheRead, t, geo.size.width, .white.opacity(0.22))
-                    seg(bd.cacheWrite, t, geo.size.width, .white.opacity(0.4))
+                    seg(bd.cacheRead, t, geo.size.width, .primary.opacity(0.22))
+                    seg(bd.cacheWrite, t, geo.size.width, .primary.opacity(0.4))
                 }
             }
             .frame(height: 5)
@@ -152,8 +152,8 @@ struct ProviderCard: View {
                       alignment: .leading, spacing: 4) {
                 legend("in", bd.input, color)
                 legend("out", bd.output, color.opacity(0.7))
-                legend("cache read", bd.cacheRead, .white.opacity(0.22))
-                legend("cache write", bd.cacheWrite, .white.opacity(0.4))
+                legend("cache read", bd.cacheRead, .primary.opacity(0.22))
+                legend("cache write", bd.cacheWrite, .primary.opacity(0.4))
             }
         }
     }

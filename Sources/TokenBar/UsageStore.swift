@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import SwiftUI
 
 @MainActor
 final class UsageStore: ObservableObject {
@@ -12,6 +13,15 @@ final class UsageStore: ObservableObject {
     let alerts = LimitAlerts()
     private var lastClaudeLimitFetch: Date = .distantPast
     @Published var isRefreshing = false
+    enum Appearance: String, CaseIterable, Identifiable {
+        case system, light, dark
+        var id: String { rawValue }
+        var label: String { switch self { case .system: return "ตามระบบ"; case .light: return "สว่าง"; case .dark: return "มืด" } }
+        var scheme: ColorScheme? { switch self { case .system: return nil; case .light: return .light; case .dark: return .dark } }
+    }
+    @Published var appearance: Appearance = Appearance(rawValue: UserDefaults.standard.string(forKey: "appearance") ?? "") ?? .system {
+        didSet { UserDefaults.standard.set(appearance.rawValue, forKey: "appearance") }
+    }
     @Published var showNumberInBar: Bool = UserDefaults.standard.object(forKey: "showNumberInBar") as? Bool ?? true {
         didSet { UserDefaults.standard.set(showNumberInBar, forKey: "showNumberInBar") }
     }

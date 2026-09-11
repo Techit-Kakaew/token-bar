@@ -36,8 +36,8 @@ struct DashboardView: View {
             if isSnapshot { content } else { ScrollView { content } }
         }
         .frame(minWidth: 860, minHeight: 560)
-        .background(Color(red: 0.08, green: 0.08, blue: 0.10))
-        .preferredColorScheme(.dark)
+        .background(Color(nsColor: .windowBackgroundColor))
+        .preferredColorScheme(store.appearance.scheme)
     }
 
     private var content: some View {
@@ -84,7 +84,7 @@ struct DashboardView: View {
                         Text(b.cost.usd).font(.system(size: 12, weight: .semibold, design: .monospaced)).foregroundStyle(color(p))
                     }
                     .padding(.horizontal, 10).padding(.vertical, 6)
-                    .background(Capsule().fill(.white.opacity(0.05)))
+                    .background(Capsule().fill(.primary.opacity(0.05)))
                 }
             }
             if !isSnapshot {
@@ -95,7 +95,7 @@ struct DashboardView: View {
                 exportMenu
             } else {
                 Text(store.window.rawValue).font(.system(size: 12, weight: .semibold)).padding(6)
-                    .background(RoundedRectangle(cornerRadius: 6).fill(.white.opacity(0.1)))
+                    .background(RoundedRectangle(cornerRadius: 6).fill(.primary.opacity(0.1)))
             }
         }
     }
@@ -188,7 +188,7 @@ struct DashboardView: View {
             )
             .chartYAxis {
                 AxisMarks(position: .leading) { v in
-                    AxisGridLine().foregroundStyle(.white.opacity(0.06))
+                    AxisGridLine().foregroundStyle(.primary.opacity(0.06))
                     AxisValueLabel {
                         if let d = v.as(Double.self) {
                             Text(metric == .tokens ? Int(d).compact : d.usd)
@@ -241,12 +241,12 @@ struct DashboardView: View {
                 Label("Back to \(store.window.rawValue)", systemImage: "xmark")
                     .font(.system(size: 11, weight: .semibold))
                     .padding(.horizontal, 9).padding(.vertical, 5)
-                    .background(RoundedRectangle(cornerRadius: 6).fill(.white.opacity(0.1)))
+                    .background(RoundedRectangle(cornerRadius: 6).fill(.primary.opacity(0.1)))
             }
             .buttonStyle(.plain)
         }
         .padding(.horizontal, 14).padding(.vertical, 10)
-        .background(RoundedRectangle(cornerRadius: 10).fill(.white.opacity(0.06)))
+        .background(RoundedRectangle(cornerRadius: 10).fill(.primary.opacity(0.06)))
     }
 
     /// Aggregate the selected day's events by a key path (project / model / source).
@@ -303,12 +303,12 @@ struct DashboardView: View {
                         VStack(alignment: .leading, spacing: 3) {
                             HStack(spacing: 6) {
                                 if let p = r.provider { Circle().fill(color(p)).frame(width: 7, height: 7) }
-                                else { Circle().fill(.white.opacity(0.3)).frame(width: 7, height: 7) }
+                                else { Circle().fill(.primary.opacity(0.3)).frame(width: 7, height: 7) }
                                 Text(r.name).font(.system(size: 12, weight: .medium)).lineLimit(1).truncationMode(.middle)
                                 Spacer()
                                 Text(r.stats.total.compact).font(.system(size: 11.5, design: .monospaced)).foregroundStyle(.secondary)
                                 Text(r.stats.cost.usd).font(.system(size: 11.5, weight: .semibold, design: .monospaced))
-                                    .foregroundStyle(r.provider.map(color) ?? .white.opacity(0.7)).frame(width: 60, alignment: .trailing)
+                                    .foregroundStyle(r.provider.map(color) ?? .primary.opacity(0.7)).frame(width: 60, alignment: .trailing)
                             }
                             GeometryReader { g in
                                 Capsule().fill((r.provider.map(color) ?? .white).opacity(0.35))
@@ -339,8 +339,8 @@ struct DashboardView: View {
                         Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 4) {
                             stat("Input", b.input, color(p))
                             stat("Output", b.output, color(p).opacity(0.7))
-                            stat("Cache read", b.cacheRead, .white.opacity(0.3))
-                            stat("Cache write", b.cacheWrite, .white.opacity(0.5))
+                            stat("Cache read", b.cacheRead, .primary.opacity(0.3))
+                            stat("Cache write", b.cacheWrite, .primary.opacity(0.5))
                         }
                         if let l = store.limits[p], !l.limits.isEmpty {
                             Divider().opacity(0.3)
@@ -349,12 +349,13 @@ struct DashboardView: View {
                                     Text(lim.name).font(.system(size: 11)).foregroundStyle(.secondary).frame(width: 90, alignment: .leading)
                                     GeometryReader { g in
                                         ZStack(alignment: .leading) {
-                                            Capsule().fill(.white.opacity(0.08))
+                                            Capsule().fill(.primary.opacity(0.08))
                                             Capsule().fill(color(p)).frame(width: max(3, g.size.width * CGFloat(min(lim.percent, 100)) / 100))
                                         }
                                     }.frame(height: 6)
                                     Text("\(Int(lim.percent))%").font(.system(size: 11, weight: .bold, design: .rounded)).frame(width: 36, alignment: .trailing)
-                                    Text(lim.resetText).font(.system(size: 10, design: .monospaced)).foregroundStyle(.tertiary).frame(width: 110, alignment: .trailing)
+                                    Text(lim.resetText).font(.system(size: 10, design: .monospaced)).foregroundStyle(.tertiary)
+                                        .frame(width: 130, alignment: .trailing).lineLimit(1).minimumScaleFactor(0.75)
                                 }
                             }
                         }
@@ -385,7 +386,7 @@ struct DashboardView: View {
     private func card<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 12) { content() }
             .padding(16)
-            .background(RoundedRectangle(cornerRadius: 14).fill(.white.opacity(0.04))
-                .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(.white.opacity(0.07), lineWidth: 1)))
+            .background(RoundedRectangle(cornerRadius: 14).fill(.primary.opacity(0.04))
+                .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(.primary.opacity(0.07), lineWidth: 1)))
     }
 }

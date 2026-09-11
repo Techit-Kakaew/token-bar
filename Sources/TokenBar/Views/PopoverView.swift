@@ -25,8 +25,8 @@ struct PopoverView: View {
             footer
         }
         .frame(width: 380)
-        .background(.black.opacity(0.35))
-        .preferredColorScheme(.dark)
+        .background(Color(nsColor: .windowBackgroundColor).opacity(0.55))
+        .preferredColorScheme(store.appearance.scheme)
     }
 
     @State private var cardsHeight: CGFloat = 0
@@ -100,7 +100,7 @@ struct PopoverView: View {
             }
             .foregroundStyle(over ? Color(red: 1.0, green: 0.72, blue: 0.3) : .secondary)
             .padding(.horizontal, 10).padding(.vertical, 5)
-            .background(RoundedRectangle(cornerRadius: 8).fill(.white.opacity(over ? 0.08 : 0.04)))
+            .background(RoundedRectangle(cornerRadius: 8).fill(.primary.opacity(over ? 0.08 : 0.04)))
         }
     }
 
@@ -111,11 +111,11 @@ struct PopoverView: View {
                 ForEach(Window.allCases) { w in
                     Text(w.rawValue).font(.system(size: 11, weight: .semibold))
                         .padding(.horizontal, 7).padding(.vertical, 3)
-                        .background(RoundedRectangle(cornerRadius: 5).fill(w == store.window ? .white.opacity(0.18) : .clear))
+                        .background(RoundedRectangle(cornerRadius: 5).fill(w == store.window ? Color.primary.opacity(0.18) : Color.clear))
                 }
             }
             .padding(2)
-            .background(RoundedRectangle(cornerRadius: 7).fill(.white.opacity(0.06)))
+            .background(RoundedRectangle(cornerRadius: 7).fill(.primary.opacity(0.06)))
         } else {
             Picker("", selection: $store.window) {
                 ForEach(Window.allCases) { Text($0.rawValue).tag($0) }
@@ -134,6 +134,9 @@ struct PopoverView: View {
                     catch { launchAtLogin = SMAppService.mainApp.status == .enabled }
                 }
             Toggle("แสดงตัวเลขบน menubar", isOn: Binding(get: { store.showNumberInBar }, set: { store.showNumberInBar = $0 }))
+            Picker("ธีม", selection: Binding(get: { store.appearance }, set: { store.appearance = $0 })) {
+                ForEach(UsageStore.Appearance.allCases) { Text($0.label).tag($0) }
+            }
             Divider()
             Picker("เตือน limit เมื่อถึง", selection: Binding(get: { store.alerts.warnPercent }, set: { store.alerts.warnPercent = $0 })) {
                 Text("ปิด (เฉพาะ 95%)").tag(0)
@@ -172,7 +175,7 @@ struct PopoverView: View {
                 Label("Dashboard", systemImage: "rectangle.3.group")
                     .font(.system(size: 11, weight: .semibold))
                     .padding(.horizontal, 9).padding(.vertical, 5)
-                    .background(RoundedRectangle(cornerRadius: 6).fill(.white.opacity(0.1)))
+                    .background(RoundedRectangle(cornerRadius: 6).fill(.primary.opacity(0.1)))
             }
             .buttonStyle(.plain)
             Spacer()
@@ -192,6 +195,6 @@ struct PopoverView: View {
                 .buttonStyle(.plain).font(.system(size: 12))
         }
         .padding(.horizontal, 12).padding(.vertical, 8)
-        .background(.white.opacity(0.03))
+        .background(.primary.opacity(0.03))
     }
 }

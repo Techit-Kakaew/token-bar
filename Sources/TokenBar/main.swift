@@ -80,7 +80,10 @@ if let i = CommandLine.arguments.firstIndex(of: "--snapshot-dashboard"), i + 1 <
         let store = UsageStore()
         while store.lastRefresh == nil { try? await Task.sleep(for: .milliseconds(100)) }
         try? await Task.sleep(for: .milliseconds(300))
-        let view = DashboardView().environmentObject(store).frame(width: 980).environment(\.colorScheme, .dark).environment(\.isSnapshot, true)
+        let light = ProcessInfo.processInfo.environment["TOKENBAR_SNAPSHOT_SCHEME"] == "light"
+        let view = DashboardView().environmentObject(store).frame(width: 980)
+            .background(light ? Color(red: 0.95, green: 0.95, blue: 0.97) : Color(red: 0.08, green: 0.08, blue: 0.10))
+            .environment(\.colorScheme, light ? .light : .dark).environment(\.isSnapshot, true)
         let r = ImageRenderer(content: view); r.scale = 2
         if let img = r.nsImage, let tiff = img.tiffRepresentation,
            let png = NSBitmapImageRep(data: tiff)?.representation(using: .png, properties: [:]) {
@@ -98,9 +101,10 @@ if let i = CommandLine.arguments.firstIndex(of: "--snapshot"), i + 1 < CommandLi
         let store = UsageStore()
         while store.lastRefresh == nil { try? await Task.sleep(for: .milliseconds(100)) }
         try? await Task.sleep(for: .milliseconds(300))
+        let light = ProcessInfo.processInfo.environment["TOKENBAR_SNAPSHOT_SCHEME"] == "light"
         let view = PopoverView().environmentObject(store)
-            .background(Color(red: 0.11, green: 0.11, blue: 0.13))
-            .environment(\.colorScheme, .dark)
+            .background(light ? Color(red: 0.93, green: 0.93, blue: 0.95) : Color(red: 0.11, green: 0.11, blue: 0.13))
+            .environment(\.colorScheme, light ? .light : .dark)
             .environment(\.isSnapshot, true)
         let r = ImageRenderer(content: view)
         r.scale = 2
