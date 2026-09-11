@@ -35,6 +35,7 @@ struct TokenBarApp: App {
         }
         .defaultSize(width: 980, height: 680)
         .windowResizability(.contentMinSize)
+        .windowStyle(.hiddenTitleBar)
     }
 }
 

@@ -1,6 +1,7 @@
 import Foundation
 import Combine
 import SwiftUI
+import AppKit
 
 @MainActor
 final class UsageStore: ObservableObject {
@@ -17,10 +18,12 @@ final class UsageStore: ObservableObject {
         case system, light, dark
         var id: String { rawValue }
         var label: String { switch self { case .system: return "ตามระบบ"; case .light: return "สว่าง"; case .dark: return "มืด" } }
-        var scheme: ColorScheme? { switch self { case .system: return nil; case .light: return .light; case .dark: return .dark } }
+        var nsAppearance: NSAppearance? {
+            switch self { case .system: return nil; case .light: return NSAppearance(named: .aqua); case .dark: return NSAppearance(named: .darkAqua) }
+        }
     }
     @Published var appearance: Appearance = Appearance(rawValue: UserDefaults.standard.string(forKey: "appearance") ?? "") ?? .system {
-        didSet { UserDefaults.standard.set(appearance.rawValue, forKey: "appearance") }
+        didSet { UserDefaults.standard.set(appearance.rawValue, forKey: "appearance"); NSApp.appearance = appearance.nsAppearance }
     }
     @Published var showNumberInBar: Bool = UserDefaults.standard.object(forKey: "showNumberInBar") as? Bool ?? true {
         didSet { UserDefaults.standard.set(showNumberInBar, forKey: "showNumberInBar") }
@@ -39,6 +42,7 @@ final class UsageStore: ObservableObject {
             window = win
         }
         for p in Provider.allCases { stats[p] = ProviderStats(provider: p) }
+        NSApp?.appearance = appearance.nsAppearance
         // Forward nested ObservableObject changes so views observing the store redraw.
         breaks.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() }.store(in: &bag)
         alerts.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() }.store(in: &bag)

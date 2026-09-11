@@ -20,3 +20,35 @@ struct Sparkline: View {
         }
     }
 }
+
+/// AppKit vibrancy behind a SwiftUI hierarchy (macOS-native glass).
+struct VisualEffect: NSViewRepresentable {
+    var material: NSVisualEffectView.Material = .popover
+    var blending: NSVisualEffectView.BlendingMode = .behindWindow
+    func makeNSView(context: Context) -> NSVisualEffectView {
+        let v = NSVisualEffectView()
+        v.material = material; v.blendingMode = blending; v.state = .active
+        return v
+    }
+    func updateNSView(_ v: NSVisualEffectView, context: Context) { v.material = material; v.blendingMode = blending }
+}
+
+/// Native-looking card: thin material + hairline separator, optional accent tint on the border.
+struct GlassCard: ViewModifier {
+    var accent: Color? = nil
+    var radius: CGFloat = 12
+    @Environment(\.isSnapshot) private var isSnapshot
+    func body(content: Content) -> some View {
+        content.background(
+            ZStack {
+                RoundedRectangle(cornerRadius: radius, style: .continuous)
+                    .fill(isSnapshot ? AnyShapeStyle(.primary.opacity(0.05)) : AnyShapeStyle(.thinMaterial))
+                RoundedRectangle(cornerRadius: radius, style: .continuous)
+                    .strokeBorder(accent?.opacity(0.35) ?? Color(nsColor: .separatorColor), lineWidth: 1)
+            }
+        )
+    }
+}
+extension View {
+    func glassCard(accent: Color? = nil, radius: CGFloat = 12) -> some View { modifier(GlassCard(accent: accent, radius: radius)) }
+}

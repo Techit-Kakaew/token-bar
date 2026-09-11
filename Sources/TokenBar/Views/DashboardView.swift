@@ -36,8 +36,9 @@ struct DashboardView: View {
             if isSnapshot { content } else { ScrollView { content } }
         }
         .frame(minWidth: 860, minHeight: 560)
-        .background(Color(nsColor: .windowBackgroundColor))
-        .preferredColorScheme(store.appearance.scheme)
+        .background {
+            if isSnapshot { Color.clear } else { VisualEffect(material: .underWindowBackground).ignoresSafeArea() }
+        }
     }
 
     private var content: some View {
@@ -84,7 +85,7 @@ struct DashboardView: View {
                         Text(b.cost.usd).font(.system(size: 12, weight: .semibold, design: .monospaced)).foregroundStyle(color(p))
                     }
                     .padding(.horizontal, 10).padding(.vertical, 6)
-                    .background(Capsule().fill(.primary.opacity(0.05)))
+                    .background(Capsule().fill(.quaternary))
                 }
             }
             if !isSnapshot {
@@ -241,12 +242,12 @@ struct DashboardView: View {
                 Label("Back to \(store.window.rawValue)", systemImage: "xmark")
                     .font(.system(size: 11, weight: .semibold))
                     .padding(.horizontal, 9).padding(.vertical, 5)
-                    .background(RoundedRectangle(cornerRadius: 6).fill(.primary.opacity(0.1)))
+                    .background(RoundedRectangle(cornerRadius: 6, style: .continuous).fill(.quaternary))
             }
             .buttonStyle(.plain)
         }
         .padding(.horizontal, 14).padding(.vertical, 10)
-        .background(RoundedRectangle(cornerRadius: 10).fill(.primary.opacity(0.06)))
+        .glassCard(radius: 10)
     }
 
     /// Aggregate the selected day's events by a key path (project / model / source).
@@ -386,7 +387,6 @@ struct DashboardView: View {
     private func card<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 12) { content() }
             .padding(16)
-            .background(RoundedRectangle(cornerRadius: 14).fill(.primary.opacity(0.04))
-                .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(.primary.opacity(0.07), lineWidth: 1)))
+            .glassCard(radius: 14)
     }
 }

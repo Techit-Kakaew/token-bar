@@ -28,11 +28,7 @@ struct ProviderCard: View {
             }
         }
         .padding(12)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(.primary.opacity(0.04))
-                .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(color.opacity(0.25), lineWidth: 1))
-        )
+        .glassCard(accent: color)
         .contentShape(Rectangle())
         .onTapGesture { withAnimation(.snappy(duration: 0.2)) { expanded.toggle() } }
     }

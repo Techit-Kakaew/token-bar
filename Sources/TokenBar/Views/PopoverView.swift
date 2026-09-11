@@ -25,8 +25,6 @@ struct PopoverView: View {
             footer
         }
         .frame(width: 380)
-        .background(Color(nsColor: .windowBackgroundColor).opacity(0.55))
-        .preferredColorScheme(store.appearance.scheme)
     }
 
     @State private var cardsHeight: CGFloat = 0
@@ -100,7 +98,7 @@ struct PopoverView: View {
             }
             .foregroundStyle(over ? Color(red: 1.0, green: 0.72, blue: 0.3) : .secondary)
             .padding(.horizontal, 10).padding(.vertical, 5)
-            .background(RoundedRectangle(cornerRadius: 8).fill(.primary.opacity(over ? 0.08 : 0.04)))
+            .glassCard(accent: over ? Color(red: 1.0, green: 0.72, blue: 0.3) : nil, radius: 8)
         }
     }
 
@@ -175,7 +173,7 @@ struct PopoverView: View {
                 Label("Dashboard", systemImage: "rectangle.3.group")
                     .font(.system(size: 11, weight: .semibold))
                     .padding(.horizontal, 9).padding(.vertical, 5)
-                    .background(RoundedRectangle(cornerRadius: 6).fill(.primary.opacity(0.1)))
+                    .background(RoundedRectangle(cornerRadius: 6, style: .continuous).fill(.quaternary))
             }
             .buttonStyle(.plain)
             Spacer()
@@ -195,6 +193,6 @@ struct PopoverView: View {
                 .buttonStyle(.plain).font(.system(size: 12))
         }
         .padding(.horizontal, 12).padding(.vertical, 8)
-        .background(.primary.opacity(0.03))
+        .overlay(alignment: .top) { Divider() }
     }
 }
