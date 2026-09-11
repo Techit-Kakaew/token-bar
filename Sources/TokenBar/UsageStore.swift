@@ -6,6 +6,8 @@ final class UsageStore: ObservableObject {
     @Published var stats: [Provider: ProviderStats] = [:]
     @Published var lastRefresh: Date?
     @Published var limits: [Provider: ProviderLimits] = [:]
+    /// Raw events from the last 30 days (for per-day drill-down in the dashboard).
+    @Published var recentEvents: [UsageEvent] = []
     let breaks = BreakReminder()
     let alerts = LimitAlerts()
     private var lastClaudeLimitFetch: Date = .distantPast
@@ -48,7 +50,9 @@ final class UsageStore: ObservableObject {
         Task.detached(priority: .utility) {
             var result: [Provider: ProviderStats] = [:]
             var recent: [Date] = []
+            var recent30: [UsageEvent] = []
             let dayAgo = Date().addingTimeInterval(-86400)
+            let monthAgo = Calendar.current.date(byAdding: .day, value: -ProviderStats.days, to: Calendar.current.startOfDay(for: Date()))!
             for src in sources {
                 var s = ProviderStats(provider: src.provider)
                 let files = src.enumerateFiles()
@@ -57,13 +61,16 @@ final class UsageStore: ObservableObject {
                 for f in files { events += cache.events(for: f) { src.parse(file: $0) } }
                 Self.aggregate(events, into: &s)
                 recent += events.lazy.map(\.timestamp).filter { $0 > dayAgo }
+                recent30 += events.filter { $0.timestamp >= monthAgo }
                 result[src.provider] = s
             }
             let final = result
             let codexLimits = CodexLimits.read()
             let recentTs = recent
+            let recentEv = recent30
             await MainActor.run {
                 self.stats = final
+                self.recentEvents = recentEv
                 self.breaks.update(with: recentTs)
                 self.limits[.codex] = codexLimits
                 self.alerts.update(self.limits)

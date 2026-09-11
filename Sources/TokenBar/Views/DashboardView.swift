@@ -6,6 +6,25 @@ struct DashboardView: View {
     @Environment(\.isSnapshot) private var isSnapshot
     @State private var metric: Metric = .tokens
     @State private var chartRange = 30
+    @State private var selectedDay: Date? = {
+        // Debug: TOKENBAR_SNAPSHOT_DAY=N preselects N days ago (for --snapshot-dashboard).
+        if let v = ProcessInfo.processInfo.environment["TOKENBAR_SNAPSHOT_DAY"], let n = Int(v) {
+            return Calendar.current.date(byAdding: .day, value: -n, to: Calendar.current.startOfDay(for: Date()))
+        }
+        return nil
+    }()
+
+    private var dayEvents: [UsageEvent] {
+        guard let d = selectedDay else { return [] }
+        let cal = Calendar.current
+        return store.recentEvents.filter { cal.isDate($0.timestamp, inSameDayAs: d) }
+    }
+
+    private var dayLabel: String {
+        guard let d = selectedDay else { return "" }
+        let f = DateFormatter(); f.dateFormat = "EEE d MMM"
+        return Calendar.current.isDateInToday(d) ? "Today" : f.string(from: d)
+    }
 
     enum Metric: String, CaseIterable, Identifiable { case tokens = "Tokens", cost = "Cost"; var id: String { rawValue } }
 
@@ -25,10 +44,17 @@ struct DashboardView: View {
         VStack(alignment: .leading, spacing: 18) {
             header
             chartCard
+            if selectedDay != nil { dayBanner }
             HStack(alignment: .top, spacing: 14) {
-                listCard("PROJECTS", icon: "folder", rows: mergedRows { $0.projects(store.window) })
-                listCard("MODELS", icon: "cpu", rows: modelRows)
-                listCard("SOURCES", icon: "app.connected.to.app.below.fill", rows: mergedRows { $0.sources(store.window) })
+                if selectedDay != nil {
+                    listCard("PROJECTS · \(dayLabel)", icon: "folder", rows: dayRows(\.project))
+                    listCard("MODELS · \(dayLabel)", icon: "cpu", rows: dayRows(\.model))
+                    listCard("SOURCES · \(dayLabel)", icon: "app.connected.to.app.below.fill", rows: dayRows(\.source))
+                } else {
+                    listCard("PROJECTS", icon: "folder", rows: mergedRows { $0.projects(store.window) })
+                    listCard("MODELS", icon: "cpu", rows: modelRows)
+                    listCard("SOURCES", icon: "app.connected.to.app.below.fill", rows: mergedRows { $0.sources(store.window) })
+                }
             }
             providerRow
         }
@@ -97,6 +123,7 @@ struct DashboardView: View {
         card {
             HStack {
                 sectionTitle("DAILY USAGE", icon: "chart.bar.fill")
+                Text("click a bar to drill down").font(.system(size: 10)).foregroundStyle(.tertiary)
                 Spacer()
                 if !isSnapshot {
                     Picker("", selection: $chartRange) {
@@ -114,6 +141,21 @@ struct DashboardView: View {
                 )
                 .foregroundStyle(by: .value("Provider", pt.provider.displayName))
                 .cornerRadius(3)
+                .opacity(selectedDay == nil || Calendar.current.isDate(pt.day, inSameDayAs: selectedDay!) ? 1 : 0.3)
+            }
+            .chartOverlay { proxy in
+                GeometryReader { geo in
+                    Rectangle().fill(.clear).contentShape(Rectangle())
+                        .onTapGesture { loc in
+                            guard let plot = proxy.plotFrame else { return }
+                            let x = loc.x - geo[plot].origin.x
+                            guard let d: Date = proxy.value(atX: x) else { return }
+                            let day = Calendar.current.startOfDay(for: d)
+                            withAnimation(.snappy(duration: 0.2)) {
+                                selectedDay = (selectedDay == day) ? nil : day
+                            }
+                        }
+                }
             }
             .chartForegroundStyleScale(
                 domain: providers.map(\.displayName),
@@ -143,6 +185,55 @@ struct DashboardView: View {
             .chartLegend(position: .top, alignment: .trailing)
             .frame(height: 220)
         }
+    }
+
+    // MARK: day drill-down
+
+    private var dayBanner: some View {
+        let ev = dayEvents
+        let total = ev.reduce(0) { $0 + $1.total }
+        let cost = ev.reduce(0.0) { $0 + Pricing.cost($1) }
+        return HStack(spacing: 12) {
+            Image(systemName: "calendar").foregroundStyle(.secondary)
+            Text(dayLabel).font(.system(size: 13, weight: .semibold))
+            Text(total.compact).font(.system(size: 13, design: .monospaced))
+            Text("tokens").font(.system(size: 11)).foregroundStyle(.tertiary)
+            Text("≈ \(cost.usd)").font(.system(size: 13, weight: .semibold, design: .monospaced)).foregroundStyle(.secondary)
+            Text("· \(ev.count) calls").font(.system(size: 11, design: .monospaced)).foregroundStyle(.tertiary)
+            ForEach(providers) { p in
+                let t = ev.filter { $0.provider == p }.reduce(0) { $0 + $1.total }
+                if t > 0 {
+                    HStack(spacing: 4) {
+                        Circle().fill(color(p)).frame(width: 7, height: 7)
+                        Text(t.compact).font(.system(size: 11, design: .monospaced)).foregroundStyle(.secondary)
+                    }
+                }
+            }
+            Spacer()
+            Button {
+                withAnimation(.snappy(duration: 0.2)) { selectedDay = nil }
+            } label: {
+                Label("Back to \(store.window.rawValue)", systemImage: "xmark")
+                    .font(.system(size: 11, weight: .semibold))
+                    .padding(.horizontal, 9).padding(.vertical, 5)
+                    .background(RoundedRectangle(cornerRadius: 6).fill(.white.opacity(0.1)))
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 14).padding(.vertical, 10)
+        .background(RoundedRectangle(cornerRadius: 10).fill(.white.opacity(0.06)))
+    }
+
+    /// Aggregate the selected day's events by a key path (project / model / source).
+    private func dayRows(_ key: KeyPath<UsageEvent, String>) -> [Row] {
+        var acc: [String: (TokenBreakdown, Set<Provider>)] = [:]
+        for e in dayEvents {
+            var cur = acc[e[keyPath: key]] ?? (TokenBreakdown(), [])
+            cur.0.add(e, cost: Pricing.cost(e)); cur.1.insert(e.provider)
+            acc[e[keyPath: key]] = cur
+        }
+        return acc.map { Row(id: $0.key, name: $0.key, stats: $0.value.0, provider: $0.value.1.count == 1 ? $0.value.1.first : nil) }
+            .sorted { $0.stats.total > $1.stats.total }
     }
 
     // MARK: lists

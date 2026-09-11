@@ -22,7 +22,9 @@ per-model cost (tap a card), launch-at-login, auto refresh every 60 s.
 
 "Dashboard" button in the popover footer opens a separate resizable window: 7/14/30-day stacked
 daily chart (tokens or cost), top **projects** (from `cwd` in logs), models, sources, and per-provider
-breakdown with rate-limit gauges. Debug render: `TokenBar --snapshot-dashboard out.png`.
+breakdown with rate-limit gauges. **Click a bar** to drill into that day — projects / models / sources
+switch to day-scoped data; click again or "Back" to return.
+Debug render: `TokenBar --snapshot-dashboard out.png` (`TOKENBAR_SNAPSHOT_DAY=1` preselects yesterday).
 
 ## Sources
 
