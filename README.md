@@ -64,13 +64,26 @@ Detects a continuous usage streak (calls across all providers with gaps < 15 min
 notification suggesting a break after 90 min, repeating every 45 min while the streak continues.
 Thresholds live in the ⚙️ menu in the popover footer. First launch asks for Notification permission.
 
-## Build & install
+## Install
+
+**Download**: grab `TokenBar-x.y.z.dmg` from [Releases](https://github.com/Techit-Kakaew/token-bar/releases),
+drag TokenBar.app to Applications. The build is universal (Apple Silicon + Intel) but **not notarized**
+(no Apple Developer account yet), so on first launch macOS may refuse it. Fix once:
 
 ```bash
-./build.sh --install     # → /Applications/TokenBar.app
+xattr -cr /Applications/TokenBar.app
 ```
 
-Requires Xcode 15+ / macOS 14+. Ad-hoc signed.
+then open normally (or right-click → Open).
+
+**Build from source** (Xcode 15+, macOS 14+):
+
+```bash
+./build.sh --install     # native build → /Applications/TokenBar.app
+./build.sh --dmg         # universal build → dist/TokenBar-<version>.dmg
+```
+
+App icon: `swift scripts/make_appicon.swift Sources/TokenBar/Resources && iconutil -c icns …/AppIcon.iconset`.
 
 ## Pricing overrides
 
