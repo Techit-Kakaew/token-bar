@@ -47,7 +47,10 @@ jobs:
              then open normally (or right-click → Open).
           3. Allow **Keychain** (reads Claude Code's login for 5h / weekly limits) and **Notifications** on first launch.
 
-          Requires macOS 14+.
+          Requires macOS 14+ (Liquid Glass UI on macOS 26).
+
+          **Upgrading from 0.1.x:** the bundle id changed to `dev.techit.tokenbar.app` — macOS treats this
+          as a new app, so re-allow **Notifications** and re-enable **Launch at login** (⚙️) once. Your settings carry over.
 
           SHA256: \`${{ steps.sums.outputs.sha }}\`
 
