@@ -1,7 +1,13 @@
-# TokenBar
+<p align="center">
+  <img src="docs/appicon-256.png" width="128" alt="TokenBar icon">
+</p>
 
-[![CI](https://github.com/Techit-Kakaew/token-bar/actions/workflows/ci.yml/badge.svg)](https://github.com/Techit-Kakaew/token-bar/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/Techit-Kakaew/token-bar)](https://github.com/Techit-Kakaew/token-bar/releases/latest)
+<h1 align="center">TokenBar</h1>
+
+<p align="center">
+  <a href="https://github.com/Techit-Kakaew/token-bar/actions/workflows/ci.yml"><img src="https://github.com/Techit-Kakaew/token-bar/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/Techit-Kakaew/token-bar/releases/latest"><img src="https://img.shields.io/github/v/release/Techit-Kakaew/token-bar" alt="Release"></a>
+</p>
 
 <p align="center">
   <img src="docs/popover.png" width="380" alt="TokenBar popover">
