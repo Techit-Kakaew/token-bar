@@ -28,6 +28,20 @@ if let i = CommandLine.arguments.firstIndex(of: "--export"), i + 1 < CommandLine
     RunLoop.main.run()
 }
 
+if CommandLine.arguments.contains("--notify-test") {
+    // Must run from the installed .app bundle: /Applications/TokenBar.app/Contents/MacOS/TokenBar --notify-test
+    Task { @MainActor in
+        let r = BreakReminder()
+        r.requestPermission()
+        try? await Task.sleep(for: .seconds(1))
+        r.fireTest()
+        try? await Task.sleep(for: .seconds(2))
+        print("test notification sent (bundle: \(Bundle.main.bundleIdentifier ?? "none"))")
+        exit(0)
+    }
+    RunLoop.main.run()
+}
+
 if CommandLine.arguments.contains("--streak") {
     let sources: [UsageSource] = [ClaudeSource(), CodexSource(), GeminiSource()]
     let dayAgo = Date().addingTimeInterval(-86400)

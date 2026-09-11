@@ -138,6 +138,7 @@ extension Int {
 
 extension Double {
     var usd: String {
+        if self == 0 { return "$0" }
         if self >= 100 { return String(format: "$%.0f", self) }
         if self >= 1 { return String(format: "$%.2f", self) }
         return String(format: "$%.3f", self)

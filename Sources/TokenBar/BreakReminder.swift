@@ -65,6 +65,9 @@ final class BreakReminder: ObservableObject {
         notifiedStreakStart = s.start
     }
 
+    /// Debug: fire the break notification immediately (`TokenBar --notify-test`).
+    func fireTest() { notify(minutes: 47) }
+
     private func notify(minutes: Int) {
         guard Self.canNotify else { return }
         let h = minutes / 60, m = minutes % 60
