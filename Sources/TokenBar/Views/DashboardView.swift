@@ -92,12 +92,37 @@ struct DashboardView: View {
                     ForEach(Window.allCases) { Text($0.rawValue).tag($0) }
                 }
                 .pickerStyle(.segmented).frame(width: 220)
+                exportMenu
             } else {
                 Text(store.window.rawValue).font(.system(size: 12, weight: .semibold)).padding(6)
                     .background(RoundedRectangle(cornerRadius: 6).fill(.white.opacity(0.1)))
             }
         }
     }
+
+    // MARK: export
+
+    private var exportMenu: some View {
+        Menu {
+            Button("Events CSV\(selectedDay != nil ? " · \(dayLabel)" : " · last 30 days")") {
+                let ev = selectedDay != nil ? dayEvents : store.recentEvents
+                let suffix = selectedDay.map { Exporter_dayStamp($0) } ?? "30d"
+                Exporter.save(Exporter.eventsCSV(ev), suggested: "tokenbar-events-\(suffix).csv", type: "csv")
+            }
+            Button("Daily summary CSV · last 30 days") {
+                Exporter.save(Exporter.dailyCSV(store.stats), suggested: "tokenbar-daily-\(Exporter.stamp()).csv", type: "csv")
+            }
+            Button("Markdown report · \(store.window.rawValue)") {
+                Exporter.save(Exporter.markdown(stats: store.stats, window: store.window, limits: store.limits),
+                              suggested: "tokenbar-report-\(store.window.rawValue.lowercased())-\(Exporter.stamp()).md", type: "md")
+            }
+        } label: {
+            Label("Export", systemImage: "square.and.arrow.up").font(.system(size: 12, weight: .semibold))
+        }
+        .menuStyle(.borderlessButton).fixedSize()
+    }
+
+    private func Exporter_dayStamp(_ d: Date) -> String { Exporter.gregorian("yyyy-MM-dd").string(from: d) }
 
     // MARK: chart
 

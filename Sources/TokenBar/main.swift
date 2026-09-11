@@ -6,6 +6,28 @@ if CommandLine.arguments.contains("--icon") {
     exit(0)
 }
 
+if let i = CommandLine.arguments.firstIndex(of: "--export"), i + 1 < CommandLine.arguments.count {
+    // Headless export for scripts/cron: TokenBar --export events|daily|report [today|7d|30d|all] > file
+    let kind = CommandLine.arguments[i + 1]
+    let winArg = i + 2 < CommandLine.arguments.count ? CommandLine.arguments[i + 2].lowercased() : "30d"
+    let window: Window = ["today": .today, "7d": .week, "30d": .month, "all": .all][winArg] ?? .month
+    Task { @MainActor in
+        let store = UsageStore()
+        while store.lastRefresh == nil { try? await Task.sleep(for: .milliseconds(100)) }
+        if kind == "report" { try? await Task.sleep(for: .seconds(2)) } // give Claude limits a moment
+        let out: String
+        switch kind {
+        case "events": out = Exporter.eventsCSV(store.recentEvents.filter { window.contains($0.timestamp) })
+        case "daily": out = Exporter.dailyCSV(store.stats)
+        case "report": out = Exporter.markdown(stats: store.stats, window: window, limits: store.limits)
+        default: FileHandle.standardError.write("unknown export kind: \(kind)\n".data(using: .utf8)!); exit(2)
+        }
+        print(out, terminator: "")
+        exit(0)
+    }
+    RunLoop.main.run()
+}
+
 if CommandLine.arguments.contains("--streak") {
     let sources: [UsageSource] = [ClaudeSource(), CodexSource(), GeminiSource()]
     let dayAgo = Date().addingTimeInterval(-86400)

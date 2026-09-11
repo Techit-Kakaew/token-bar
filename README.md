@@ -26,6 +26,17 @@ breakdown with rate-limit gauges. **Click a bar** to drill into that day — pro
 switch to day-scoped data; click again or "Back" to return.
 Debug render: `TokenBar --snapshot-dashboard out.png` (`TOKENBAR_SNAPSHOT_DAY=1` preselects yesterday).
 
+## Export
+
+Dashboard → **Export** menu: events CSV (last 30 days, or the drilled-down day), daily summary CSV,
+or a Markdown report for the selected window. Headless for scripts / cron:
+
+```bash
+/Applications/TokenBar.app/Contents/MacOS/TokenBar --export events 7d  > events.csv
+/Applications/TokenBar.app/Contents/MacOS/TokenBar --export daily      > daily.csv
+/Applications/TokenBar.app/Contents/MacOS/TokenBar --export report 30d > report.md
+```
+
 ## Sources
 
 Each card splits usage by where the call came from:
