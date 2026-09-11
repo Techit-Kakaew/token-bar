@@ -135,6 +135,11 @@ struct PopoverView: View {
                 }
             Toggle("แสดงตัวเลขบน menubar", isOn: Binding(get: { store.showNumberInBar }, set: { store.showNumberInBar = $0 }))
             Divider()
+            Picker("เตือน limit เมื่อถึง", selection: Binding(get: { store.alerts.warnPercent }, set: { store.alerts.warnPercent = $0 })) {
+                Text("ปิด (เฉพาะ 95%)").tag(0)
+                ForEach([70, 80, 90], id: \.self) { Text("\($0)%  + 95%").tag($0) }
+            }
+            Divider()
             Toggle("เตือนให้พัก", isOn: Binding(get: { store.breaks.enabled }, set: { store.breaks.enabled = $0 }))
             Picker("เตือนหลังใช้ต่อเนื่อง", selection: Binding(get: { store.breaks.thresholdMinutes }, set: { store.breaks.thresholdMinutes = $0 })) {
                 ForEach([45, 60, 90, 120, 180], id: \.self) { Text("\($0) นาที").tag($0) }

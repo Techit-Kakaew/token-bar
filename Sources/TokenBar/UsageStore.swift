@@ -7,6 +7,7 @@ final class UsageStore: ObservableObject {
     @Published var lastRefresh: Date?
     @Published var limits: [Provider: ProviderLimits] = [:]
     let breaks = BreakReminder()
+    let alerts = LimitAlerts()
     private var lastClaudeLimitFetch: Date = .distantPast
     @Published var isRefreshing = false
     @Published var showNumberInBar: Bool = UserDefaults.standard.object(forKey: "showNumberInBar") as? Bool ?? true {
@@ -28,6 +29,7 @@ final class UsageStore: ObservableObject {
         for p in Provider.allCases { stats[p] = ProviderStats(provider: p) }
         // Forward nested ObservableObject changes so views observing the store redraw.
         breaks.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() }.store(in: &bag)
+        alerts.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() }.store(in: &bag)
         refresh()
         timer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
             Task { @MainActor in self?.refresh() }
@@ -64,6 +66,7 @@ final class UsageStore: ObservableObject {
                 self.stats = final
                 self.breaks.update(with: recentTs)
                 self.limits[.codex] = codexLimits
+                self.alerts.update(self.limits)
                 self.lastRefresh = Date()
                 self.isRefreshing = false
             }
@@ -84,6 +87,7 @@ final class UsageStore: ObservableObject {
                     l.limits = prev.limits; l.fetchedAt = prev.fetchedAt; l.plan = l.plan ?? prev.plan
                 }
                 self.limits[.claude] = l
+                self.alerts.update(self.limits)
             }
         }
     }

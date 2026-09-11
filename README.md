@@ -40,6 +40,11 @@ Each card splits usage by where the call came from:
 
 Gauges turn amber ≥70 %, red ≥90 %.
 
+## Limit alerts
+
+Notification when any 5h / weekly window crosses 80 % (configurable: off / 70 / 80 / 90) and again at 95 %,
+once per reset cycle. The menu-bar icon turns amber / red and shows the worst percentage while over threshold.
+
 ## Break reminder
 
 Detects a continuous usage streak (calls across all providers with gaps < 15 min) and posts a macOS
