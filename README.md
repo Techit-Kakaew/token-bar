@@ -97,7 +97,7 @@ then open normally (or right-click → Open).
 **Release**: bump `CFBundleShortVersionString` in `Info.plist`, commit, then `git tag vX.Y.Z && git push origin vX.Y.Z`.
 GitHub Actions builds the universal dmg and publishes the release automatically (`.github/workflows/release.yml`).
 
-App icon: `swift scripts/make_appicon.swift Sources/TokenBar/Resources && iconutil -c icns …/AppIcon.iconset`.
+App icon: PNGs in `Assets/AppIcon.xcassets` (regenerate with `scripts/make_appicon.swift`); `build.sh` compiles them with `actool` into `Assets.car` + `AppIcon.icns`.
 
 ## Pricing overrides
 

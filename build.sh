@@ -25,7 +25,13 @@ mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN" "$APP/Contents/MacOS/"
 cp Info.plist "$APP/Contents/"
 cp -R "$BUNDLE" "$APP/Contents/Resources/"
-cp Sources/TokenBar/Resources/AppIcon.icns "$APP/Contents/Resources/"
+# App icon: compile the asset catalog → Assets.car (what macOS 26 reads) + AppIcon.icns (older lookups)
+ICON_OUT=$(mktemp -d)
+xcrun actool Assets/AppIcon.xcassets --compile "$ICON_OUT" --platform macosx \
+  --minimum-deployment-target 14.0 --app-icon AppIcon \
+  --output-partial-info-plist "$ICON_OUT/partial.plist" >/dev/null 2>&1
+cp "$ICON_OUT/Assets.car" "$ICON_OUT/AppIcon.icns" "$APP/Contents/Resources/"
+rm -rf "$ICON_OUT"
 codesign --force --deep --sign - "$APP" 2>/dev/null || true
 echo "built $APP ($(lipo -archs "$APP/Contents/MacOS/TokenBar"))"
 
