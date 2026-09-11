@@ -66,7 +66,8 @@ Thresholds live in the ⚙️ menu in the popover footer. First launch asks for 
 
 ## Install
 
-**Download**: grab `TokenBar-x.y.z.dmg` from [Releases](https://github.com/Techit-Kakaew/token-bar/releases),
+**Download**: [TokenBar-0.1.0.dmg](https://github.com/Techit-Kakaew/token-bar/releases/latest/download/TokenBar-0.1.0.dmg)
+(all versions on [Releases](https://github.com/Techit-Kakaew/token-bar/releases)),
 drag TokenBar.app to Applications. The build is universal (Apple Silicon + Intel) but **not notarized**
 (no Apple Developer account yet), so on first launch macOS may refuse it. Fix once:
 
