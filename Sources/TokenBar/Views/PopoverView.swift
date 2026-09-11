@@ -25,6 +25,7 @@ struct PopoverView: View {
             footer
         }
         .frame(width: 380)
+        .background { if !isSnapshot { WindowGlassTuner(material: .hudWindow) } }
     }
 
     @State private var cardsHeight: CGFloat = 0
@@ -173,7 +174,7 @@ struct PopoverView: View {
                 Label("Dashboard", systemImage: "rectangle.3.group")
                     .font(.system(size: 11, weight: .semibold))
                     .padding(.horizontal, 9).padding(.vertical, 5)
-                    .background(RoundedRectangle(cornerRadius: 6, style: .continuous).fill(.quaternary))
+                    .glassCard(radius: 7, interactive: true)
             }
             .buttonStyle(.plain)
             Spacer()

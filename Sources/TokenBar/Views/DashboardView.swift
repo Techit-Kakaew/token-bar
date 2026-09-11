@@ -37,7 +37,9 @@ struct DashboardView: View {
         }
         .frame(minWidth: 860, minHeight: 560)
         .background {
-            if isSnapshot { Color.clear } else { VisualEffect(material: .underWindowBackground).ignoresSafeArea() }
+            if isSnapshot { Color.clear } else {
+                ZStack { VisualEffect(material: .sidebar).ignoresSafeArea(); WindowGlassTuner(material: .sidebar) }
+            }
         }
     }
 
@@ -85,7 +87,7 @@ struct DashboardView: View {
                         Text(b.cost.usd).font(.system(size: 12, weight: .semibold, design: .monospaced)).foregroundStyle(color(p))
                     }
                     .padding(.horizontal, 10).padding(.vertical, 6)
-                    .background(Capsule().fill(.quaternary))
+                    .glassCard(accent: color(p), radius: 14)
                 }
             }
             if !isSnapshot {
@@ -242,7 +244,7 @@ struct DashboardView: View {
                 Label("Back to \(store.window.rawValue)", systemImage: "xmark")
                     .font(.system(size: 11, weight: .semibold))
                     .padding(.horizontal, 9).padding(.vertical, 5)
-                    .background(RoundedRectangle(cornerRadius: 6, style: .continuous).fill(.quaternary))
+                    .glassCard(radius: 7, interactive: true)
             }
             .buttonStyle(.plain)
         }
