@@ -1,0 +1,66 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_16.2.app || sudo xcode-select -s "$(ls -d /Applications/Xcode*.app | tail -1)"
+
+      - name: Check version matches tag
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          VER=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' Info.plist)
+          echo "tag=$TAG plist=$VER"
+          [[ "$TAG" == "$VER" ]] || { echo "::error::Info.plist CFBundleShortVersionString ($VER) != tag ($TAG)"; exit 1; }
+
+      - name: Build universal .dmg
+        run: ./build.sh --dmg
+
+      - name: Checksums
+        id: sums
+        run: |
+          cd dist
+          DMG=$(ls TokenBar-*.dmg)
+          shasum -a 256 "$DMG" > "$DMG.sha256"
+          echo "dmg=$DMG" >> "$GITHUB_OUTPUT"
+          echo "sha=$(cut -d' ' -f1 "$DMG.sha256")" >> "$GITHUB_OUTPUT"
+
+      - name: Release notes
+        run: |
+          cat > notes.md <<EOF
+          ## Install
+          1. Download \`${{ steps.sums.outputs.dmg }}\`, drag **TokenBar.app** to Applications.
+          2. Universal (Apple Silicon + Intel), **not notarized**. If macOS refuses to open it, run once:
+             \`\`\`bash
+             xattr -cr /Applications/TokenBar.app
+             \`\`\`
+             then open normally (or right-click → Open).
+          3. Allow **Keychain** (reads Claude Code's login for 5h / weekly limits) and **Notifications** on first launch.
+
+          Requires macOS 14+.
+
+          SHA256: \`${{ steps.sums.outputs.sha }}\`
+
+          ## Changes
+          EOF
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: TokenBar ${{ github.ref_name }}
+          body_path: notes.md
+          generate_release_notes: true
+          append_body: true
+          files: |
+            dist/${{ steps.sums.outputs.dmg }}
+            dist/${{ steps.sums.outputs.dmg }}.sha256

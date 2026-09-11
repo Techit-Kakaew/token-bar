@@ -1,5 +1,8 @@
 # TokenBar
 
+[![CI](https://github.com/Techit-Kakaew/token-bar/actions/workflows/ci.yml/badge.svg)](https://github.com/Techit-Kakaew/token-bar/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/Techit-Kakaew/token-bar)](https://github.com/Techit-Kakaew/token-bar/releases/latest)
+
 <p align="center">
   <img src="docs/popover.png" width="380" alt="TokenBar popover">
 </p>
@@ -66,7 +69,7 @@ Thresholds live in the ⚙️ menu in the popover footer. First launch asks for 
 
 ## Install
 
-**Download**: [TokenBar-0.1.0.dmg](https://github.com/Techit-Kakaew/token-bar/releases/latest/download/TokenBar-0.1.0.dmg)
+**Download**: latest `.dmg` from [Releases](https://github.com/Techit-Kakaew/token-bar/releases/latest)
 (all versions on [Releases](https://github.com/Techit-Kakaew/token-bar/releases)),
 drag TokenBar.app to Applications. The build is universal (Apple Silicon + Intel) but **not notarized**
 (no Apple Developer account yet), so on first launch macOS may refuse it. Fix once:
@@ -83,6 +86,9 @@ then open normally (or right-click → Open).
 ./build.sh --install     # native build → /Applications/TokenBar.app
 ./build.sh --dmg         # universal build → dist/TokenBar-<version>.dmg
 ```
+
+**Release**: bump `CFBundleShortVersionString` in `Info.plist`, commit, then `git tag vX.Y.Z && git push origin vX.Y.Z`.
+GitHub Actions builds the universal dmg and publishes the release automatically (`.github/workflows/release.yml`).
 
 App icon: `swift scripts/make_appicon.swift Sources/TokenBar/Resources && iconutil -c icns …/AppIcon.iconset`.
 

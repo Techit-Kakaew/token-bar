@@ -1,0 +1,21 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: ["**.md", "docs/**"]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_16.2.app || sudo xcode-select -s "$(ls -d /Applications/Xcode*.app | tail -1)"
+      - name: Swift version
+        run: swift --version
+      - name: Build (release)
+        run: swift build -c release 2>&1 | tail -20
+      - name: Smoke test CLI
+        run: .build/release/TokenBar --icon && .build/release/TokenBar --dump | head -5
