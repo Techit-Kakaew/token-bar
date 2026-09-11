@@ -133,6 +133,11 @@ struct PopoverView: View {
                     catch { launchAtLogin = SMAppService.mainApp.status == .enabled }
                 }
             Toggle("แสดงตัวเลขบน menubar", isOn: Binding(get: { store.showNumberInBar }, set: { store.showNumberInBar = $0 }))
+            Picker("แสดงบน menubar", selection: Binding(get: { store.menuBarProvider?.rawValue ?? "all" },
+                                                         set: { store.menuBarProvider = Provider(rawValue: $0) })) {
+                Text("รวมทุกเจ้า").tag("all")
+                ForEach(Provider.allCases) { Text($0.displayName).tag($0.rawValue) }
+            }
             Picker("ธีม", selection: Binding(get: { store.appearance }, set: { store.appearance = $0 })) {
                 ForEach(UsageStore.Appearance.allCases) { Text($0.label).tag($0) }
             }

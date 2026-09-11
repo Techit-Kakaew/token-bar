@@ -25,6 +25,15 @@ final class UsageStore: ObservableObject {
     @Published var appearance: Appearance = Appearance(rawValue: UserDefaults.standard.string(forKey: "appearance") ?? "") ?? .system {
         didSet { UserDefaults.standard.set(appearance.rawValue, forKey: "appearance"); NSApp.appearance = appearance.nsAppearance }
     }
+    /// Which provider the menu-bar item represents (nil = all combined).
+    @Published var menuBarProvider: Provider? = Provider(rawValue: UserDefaults.standard.string(forKey: "menuBarProvider") ?? "") {
+        didSet { UserDefaults.standard.set(menuBarProvider?.rawValue ?? "", forKey: "menuBarProvider") }
+    }
+    /// Tokens shown in the menu bar: selected provider only, or the sum.
+    var menuBarTokens: Int {
+        if let p = menuBarProvider { return stats[p]?.stats(window).total ?? 0 }
+        return totalTokens
+    }
     @Published var showNumberInBar: Bool = UserDefaults.standard.object(forKey: "showNumberInBar") as? Bool ?? true {
         didSet { UserDefaults.standard.set(showNumberInBar, forKey: "showNumberInBar") }
     }

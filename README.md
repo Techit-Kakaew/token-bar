@@ -24,6 +24,7 @@ Reads local logs only — no API keys, no network.
 
 Features: Today / 7d / 30d / All windows, input/output/cache breakdown, 14-day sparkline,
 per-model cost (tap a card), launch-at-login, auto refresh every 60 s. Light / dark / system theme (⚙️ menu).
+Menu-bar item can show the combined total or a single provider (its logo + tokens + worst limit) — ⚙️ → "แสดงบน menubar".
 
 ## Dashboard window
 

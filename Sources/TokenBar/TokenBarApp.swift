@@ -9,19 +9,20 @@ struct TokenBarApp: App {
         MenuBarExtra {
             PopoverView().environmentObject(store)
         } label: {
-            let sev = store.alerts.severity
+            let focus = store.menuBarProvider
+            let sev = store.alerts.severity(for: focus)
             HStack(spacing: 4) {
                 if sev > 0 {
-                    Image(nsImage: MenuBarIconTint.image(severity: sev)).renderingMode(.original)
+                    Image(nsImage: MenuBarIconTint.image(provider: focus, severity: sev)).renderingMode(.original)
                 } else {
-                    Image(nsImage: MenuBarIcon.image).renderingMode(.template)
+                    Image(nsImage: MenuBarIconTint.image(provider: focus, severity: 0)).renderingMode(.template)
                 }
                 if store.showNumberInBar {
-                    Text(store.totalTokens.compact)
+                    Text(store.menuBarTokens.compact)
                         .font(.system(size: 11, weight: .medium, design: .rounded))
                         .monospacedDigit()
                 }
-                if sev > 0, let w = store.alerts.worst {
+                if sev > 0, let w = store.alerts.worst(for: focus) {
                     Text("· \(Int(w.limit.percent))%")
                         .font(.system(size: 11, weight: .bold, design: .rounded))
                         .monospacedDigit()
