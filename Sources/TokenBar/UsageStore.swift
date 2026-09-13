@@ -12,6 +12,17 @@ final class UsageStore: ObservableObject {
     @Published var recentEvents: [UsageEvent] = []
     let breaks = BreakReminder()
     let alerts = LimitAlerts()
+    let updates = UpdateChecker()
+    @Published var onboarded: Bool = UserDefaults.standard.bool(forKey: "onboarded") {
+        didSet { UserDefaults.standard.set(onboarded, forKey: "onboarded") }
+    }
+    /// Opt-in: read Claude Code's Keychain token to fetch 5h / weekly limits.
+    @Published var claudeLimitsEnabled: Bool = UserDefaults.standard.bool(forKey: "claudeLimits") {
+        didSet {
+            UserDefaults.standard.set(claudeLimitsEnabled, forKey: "claudeLimits")
+            if claudeLimitsEnabled { refreshClaudeLimits(force: true) } else { limits[.claude] = nil; alerts.update(limits) }
+        }
+    }
     private var lastClaudeLimitFetch: Date = .distantPast
     @Published var isRefreshing = false
     enum Appearance: String, CaseIterable, Identifiable {
@@ -71,9 +82,20 @@ final class UsageStore: ObservableObject {
         d.set(true, forKey: "migrated.v1")
     }
 
+    /// Existing users (pre-onboarding builds) keep limits on and skip the intro card.
+    private static func grandfatherOnboarding() {
+        let d = UserDefaults.standard
+        guard d.object(forKey: "onboarded") == nil else { return }
+        let existing = d.object(forKey: "break.threshold") != nil || d.object(forKey: "window") != nil
+        if existing { d.set(true, forKey: "onboarded"); d.set(true, forKey: "claudeLimits") }
+    }
+
     init() {
         Self.migrateDefaultsIfNeeded()
+        Self.grandfatherOnboarding()
         L10n.current = L10n.resolve(override: language)
+        onboarded = UserDefaults.standard.bool(forKey: "onboarded")
+        claudeLimitsEnabled = UserDefaults.standard.bool(forKey: "claudeLimits")
         if let w = UserDefaults.standard.string(forKey: "window"), let win = Window(rawValue: w) {
             window = win
         }
@@ -82,7 +104,9 @@ final class UsageStore: ObservableObject {
         // Forward nested ObservableObject changes so views observing the store redraw.
         breaks.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() }.store(in: &bag)
         alerts.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() }.store(in: &bag)
+        updates.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() }.store(in: &bag)
         refresh()
+        updates.autoCheck()
         timer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
             Task { @MainActor in self?.refresh() }
         }
@@ -133,6 +157,7 @@ final class UsageStore: ObservableObject {
 
     /// Claude limits come from the network → throttle to every 5 min (manual refresh forces).
     func refreshClaudeLimits(force: Bool = false) {
+        guard claudeLimitsEnabled else { return }
         guard force || Date().timeIntervalSince(lastClaudeLimitFetch) > 300 else { return }
         lastClaudeLimitFetch = Date()
         Task.detached(priority: .utility) {

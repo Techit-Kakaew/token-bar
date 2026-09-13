@@ -51,8 +51,35 @@ struct PopoverView: View {
 
     private var visibleProviders: [Provider] { store.visibleProviders }
 
+    private var onboardingCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 8) {
+                Image(nsImage: MenuBarIcon.image).renderingMode(.template)
+                Text(L("onb.title")).font(.system(size: 13, weight: .semibold))
+            }
+            Text(L("onb.body")).font(.system(size: 11)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            HStack(spacing: 8) {
+                Button {
+                    store.claudeLimitsEnabled = true
+                    store.breaks.requestPermission()
+                    withAnimation { store.onboarded = true }
+                } label: {
+                    Text("\(L("onb.enableLimits")) + \(L("onb.enableNotifs"))").font(.system(size: 11, weight: .semibold))
+                        .padding(.horizontal, 10).padding(.vertical, 6)
+                }
+                .buttonStyle(.borderedProminent).controlSize(.small)
+                Button(L("onb.skip")) { withAnimation { store.onboarded = true } }
+                    .buttonStyle(.plain).font(.system(size: 11)).foregroundStyle(.secondary)
+                Spacer()
+            }
+        }
+        .padding(12)
+        .glassCard(accent: Color(red: 0.55, green: 0.65, blue: 1.0))
+    }
+
     private var cards: some View {
         VStack(spacing: 8) {
+            if !store.onboarded { onboardingCard }
             if visibleProviders.isEmpty {
                 let anyData = Provider.allCases.contains { store.stats[$0]?.available == true }
                 VStack(alignment: .leading, spacing: 6) {
@@ -147,6 +174,7 @@ struct PopoverView: View {
                     catch { launchAtLogin = SMAppService.mainApp.status == .enabled }
                 }
             Toggle(L("Show number in menu bar"), isOn: Binding(get: { store.showNumberInBar }, set: { store.showNumberInBar = $0 }))
+            Toggle(L("Claude limits (Keychain)"), isOn: Binding(get: { store.claudeLimitsEnabled }, set: { store.claudeLimitsEnabled = $0 }))
             Picker(L("Menu bar shows"), selection: Binding(get: { store.menuBarProvider?.rawValue ?? "all" },
                                                          set: { store.menuBarProvider = Provider(rawValue: $0) })) {
                 Text(L("All providers")).tag("all")
@@ -182,6 +210,9 @@ struct PopoverView: View {
                     NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.Notifications-Settings.extension")!)
                 }
             }
+            Divider()
+            Button(L("Check for updates…")) { Task { await store.updates.check(manual: true) } }
+            Text("TokenBar \(store.updates.current)")
         } label: {
             Image(systemName: "gearshape").font(.system(size: 12))
         }
@@ -202,6 +233,16 @@ struct PopoverView: View {
             }
             .buttonStyle(.plain)
             Spacer()
+            if let v = store.updates.latest {
+                Button {
+                    if let u = store.updates.latestURL { NSWorkspace.shared.open(u) }
+                } label: {
+                    Label(L("update.badge %@", v), systemImage: "arrow.down.circle.fill")
+                        .font(.system(size: 10.5, weight: .semibold))
+                        .foregroundStyle(Color(red: 0.55, green: 0.65, blue: 1.0))
+                }
+                .buttonStyle(.plain)
+            }
             if let t = store.lastRefresh {
                 Text(L("updated %@", t.formatted(date: .omitted, time: .shortened)))
                     .font(.system(size: 10, design: .monospaced)).foregroundStyle(.tertiary)

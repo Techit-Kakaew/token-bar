@@ -30,7 +30,7 @@ final class BreakReminder: ObservableObject {
     /// UNUserNotificationCenter crashes outside a real .app bundle (e.g. `swift run`, --snapshot).
     private static let canNotify = Bundle.main.bundleIdentifier != nil
 
-    init() { if enabled { requestPermission() } }
+    init() {}   // permission is requested from onboarding or when the user toggles a reminder on
 
     func requestPermission() {
         guard Self.canNotify else { return }

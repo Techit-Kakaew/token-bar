@@ -75,6 +75,22 @@ enum L10n {
         "limit.warn %@ %@ %d": ("%@ %@ limit at %d%% 🟠", "%@ %@ limit %d%% 🟠"),
         "limit.body %d": ("%d%% used", "ใช้ไป %d%% แล้ว"),
         "limit.body %d %@": ("%d%% used · resets in %@", "ใช้ไป %d%% แล้ว · reset อีก %@"),
+        // onboarding / privacy
+        "onb.title": ("Welcome to TokenBar", "ยินดีต้อนรับสู่ TokenBar"),
+        "onb.body": ("Usage is read from local logs only (Claude Code, Codex, Gemini, Zed…). Nothing is uploaded.\n\nOptional: show Claude's 5h / weekly limits. This reads Claude Code's login token from your Keychain and calls Anthropic's usage endpoint — macOS will ask once; choose “Always Allow”.",
+                     "อ่านการใช้งานจาก log ในเครื่องเท่านั้น (Claude Code, Codex, Gemini, Zed…) ไม่มีการอัปโหลดข้อมูล\n\nตัวเลือกเสริม: แสดง limit 5 ชม. / รายสัปดาห์ของ Claude — จะอ่าน token login ของ Claude Code จาก Keychain แล้วเรียก usage endpoint ของ Anthropic macOS จะถามครั้งเดียว เลือก “Always Allow”"),
+        "onb.enableLimits": ("Enable Claude limits", "เปิด limit ของ Claude"),
+        "onb.enableNotifs": ("Enable notifications", "เปิดการแจ้งเตือน"),
+        "onb.skip": ("Skip for now", "ไว้ก่อน"),
+        "Claude limits (Keychain)": ("Claude limits (uses Keychain)", "limit ของ Claude (ใช้ Keychain)"),
+        // updates
+        "Check for updates…": ("Check for updates…", "ตรวจสอบอัปเดต…"),
+        "update.available %@": ("TokenBar %@ is available", "มี TokenBar %@ ให้อัปเดต"),
+        "update.current %@": ("You have %@. Download the new .dmg from GitHub Releases.", "คุณใช้ %@ อยู่ ดาวน์โหลด .dmg ใหม่จาก GitHub Releases"),
+        "update.none %@": ("You're up to date (%@)", "เป็นเวอร์ชันล่าสุดแล้ว (%@)"),
+        "update.error": ("Could not check for updates", "ตรวจสอบอัปเดตไม่ได้"),
+        "update.badge %@": ("v%@ available", "มี v%@"),
+        "Download": ("Download", "ดาวน์โหลด"), "Later": ("Later", "ไว้ก่อน"),
         // dashboard
         "DAILY USAGE": ("DAILY USAGE", "การใช้งานรายวัน"),
         "click a bar to drill down": ("click a bar to drill down", "คลิกแท่งเพื่อดูรายวัน"),

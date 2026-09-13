@@ -52,6 +52,14 @@ or a Markdown report for the selected window. Headless for scripts / cron:
 /Applications/TokenBar.app/Contents/MacOS/TokenBar --export report 30d > report.md
 ```
 
+## Privacy
+
+- Reads **local log files only**; nothing is uploaded, no telemetry, no analytics.
+- The single network call is optional: with *Claude limits* enabled, TokenBar reads Claude Code's OAuth token from your
+  Keychain (macOS asks once) and calls `api.anthropic.com/api/oauth/usage` to show 5h / weekly limits.
+  Turn it off in ⚙️ at any time. A once-a-day check against the GitHub Releases API looks for new versions (no identifiers sent).
+- Settings live in `UserDefaults` (`dev.techit.tokenbar.app`); nothing else is written outside the app.
+
 ## Sources
 
 Each card splits usage by where the call came from:
