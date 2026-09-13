@@ -3,9 +3,11 @@ import Foundation
 /// ~/.gemini/tmp/<hash>/chats/*.json — JSON array (or {messages:[...]}) of messages;
 /// `gemini` messages carry `tokens: {input, output, cached, thoughts, tool, total}` and `model`.
 struct GeminiSource: UsageSource {
-    let provider = Provider.gemini
+    var provider = Provider.gemini
+    /// Config dir under $HOME (".gemini" or ".qwen" — Qwen Code is a Gemini CLI fork with the same layout).
+    var dir = ".gemini"
     var roots: [URL] {
-        [FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".gemini/tmp")]
+        [FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("\(dir)/tmp")]
     }
 
     func matches(_ url: URL) -> Bool {
@@ -26,12 +28,12 @@ struct GeminiSource: UsageSource {
                   let ts = parseDate(m["timestamp"] as? String) else { continue }
             let type = m["type"] as? String ?? ""
             if type == "user" { continue }
-            let model = m["model"] as? String ?? "gemini"
+            let model = m["model"] as? String ?? (provider == .qwen ? "qwen" : "gemini")
             events.append(UsageEvent(
-                provider: .gemini, timestamp: ts, model: model,
+                provider: provider, timestamp: ts, model: model,
                 input: int(tokens["input"]),
                 output: int(tokens["output"]) + int(tokens["thoughts"]) + int(tokens["tool"]),
-                cacheRead: int(tokens["cached"]), cacheWrite: 0, source: "Gemini CLI"))
+                cacheRead: int(tokens["cached"]), cacheWrite: 0, source: provider.displayName))
         }
         return events
     }

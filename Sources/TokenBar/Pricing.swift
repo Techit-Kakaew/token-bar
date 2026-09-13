@@ -58,6 +58,10 @@ enum Pricing {
         "gemini-2.5-pro": ModelPrice(1.25, 10),
         "gemini-2.5-flash": ModelPrice(0.3, 2.5),
         "gemini": ModelPrice(1.25, 10),
+        // Alibaba (approximate)
+        "qwen3-coder-plus": ModelPrice(1, 5),
+        "qwen3-coder": ModelPrice(0.3, 1.2),
+        "qwen": ModelPrice(0.5, 2),
     ]
 
     static var table: [String: ModelPrice] = {

@@ -1,7 +1,7 @@
 import Foundation
 
 enum Provider: String, CaseIterable, Identifiable, Codable {
-    case claude, codex, gemini
+    case claude, codex, gemini, zed, opencode, qwen
     var id: String { rawValue }
 
     var displayName: String {
@@ -9,6 +9,9 @@ enum Provider: String, CaseIterable, Identifiable, Codable {
         case .claude: return "Claude Code"
         case .codex: return "Codex CLI"
         case .gemini: return "Gemini CLI"
+        case .zed: return "Zed Agent"
+        case .opencode: return "OpenCode"
+        case .qwen: return "Qwen Code"
         }
     }
 
@@ -17,6 +20,9 @@ enum Provider: String, CaseIterable, Identifiable, Codable {
         case .claude: return "Anthropic"
         case .codex: return "OpenAI"
         case .gemini: return "Google"
+        case .zed: return "Zed Industries · multi-model"
+        case .opencode: return "SST · multi-model"
+        case .qwen: return "Alibaba"
         }
     }
 
@@ -26,6 +32,9 @@ enum Provider: String, CaseIterable, Identifiable, Codable {
         case .claude: return "claude"
         case .codex: return "openai"
         case .gemini: return "gemini"
+        case .zed: return "zed"
+        case .opencode: return "opencode"
+        case .qwen: return "qwen"
         }
     }
 
@@ -34,6 +43,9 @@ enum Provider: String, CaseIterable, Identifiable, Codable {
         case .claude: return "sparkle"
         case .codex: return "terminal"
         case .gemini: return "diamond"
+        case .zed: return "bolt.fill"
+        case .opencode: return "chevron.left.forwardslash.chevron.right"
+        case .qwen: return "cloud.fill"
         }
     }
 
@@ -43,6 +55,9 @@ enum Provider: String, CaseIterable, Identifiable, Codable {
         case .claude: return (0.85, 0.47, 0.34)   // terracotta
         case .codex: return (0.30, 0.85, 0.65)    // mint
         case .gemini: return (0.45, 0.60, 1.00)   // periwinkle
+        case .zed: return (0.55, 0.50, 1.00)      // violet
+        case .opencode: return (1.00, 0.80, 0.35) // amber
+        case .qwen: return (0.60, 0.40, 0.95)     // purple
         }
     }
 }

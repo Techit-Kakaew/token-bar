@@ -43,7 +43,7 @@ if CommandLine.arguments.contains("--notify-test") {
 }
 
 if CommandLine.arguments.contains("--streak") {
-    let sources: [UsageSource] = [ClaudeSource(), CodexSource(), GeminiSource()]
+    let sources: [UsageSource] = [ClaudeSource(), CodexSource(), GeminiSource(), ZedSource(), OpenCodeSource(), GeminiSource(provider: .qwen, dir: ".qwen")]
     let dayAgo = Date().addingTimeInterval(-86400)
     let ts = sources.flatMap { src in src.enumerateFiles().flatMap { src.parse(file: $0) } }.map(\.timestamp).filter { $0 > dayAgo }
     for gap in [10, 15, 30] {
@@ -63,7 +63,7 @@ if CommandLine.arguments.contains("--streak") {
 
 if CommandLine.arguments.contains("--dump") {
     // Debug: print aggregated usage as text and exit.
-    let sources: [UsageSource] = [ClaudeSource(), CodexSource(), GeminiSource()]
+    let sources: [UsageSource] = [ClaudeSource(), CodexSource(), GeminiSource(), ZedSource(), OpenCodeSource(), GeminiSource(provider: .qwen, dir: ".qwen")]
     for src in sources {
         let files = src.enumerateFiles()
         let events = files.flatMap { src.parse(file: $0) }

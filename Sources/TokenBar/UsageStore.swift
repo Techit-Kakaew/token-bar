@@ -45,7 +45,8 @@ final class UsageStore: ObservableObject {
         didSet { UserDefaults.standard.set(window.rawValue, forKey: "window") }
     }
 
-    private let sources: [UsageSource] = [ClaudeSource(), CodexSource(), GeminiSource()]
+    private let sources: [UsageSource] = [ClaudeSource(), CodexSource(), GeminiSource(),
+                                          ZedSource(), OpenCodeSource(), GeminiSource(provider: .qwen, dir: ".qwen")]
     private let cache = FileCache()
     private var timer: Timer?
     private var bag = Set<AnyCancellable>()

@@ -16,11 +16,16 @@
 macOS menu-bar app that shows AI token usage & estimated cost across local AI coding CLIs.
 Reads local logs only — no API keys, no network.
 
-| Provider | Source |
-|---|---|
-| Claude Code | `~/.claude/projects/**/*.jsonl` (`message.usage`, deduped by message id) |
-| Codex CLI | `~/.codex/sessions/**/*.jsonl` (`token_count` → `last_token_usage`) |
-| Gemini CLI | `~/.gemini/tmp/*/chats/*.json` (`tokens` field) |
+| Provider | Source | Status |
+|---|---|---|
+| Claude Code | `~/.claude/projects/**/*.jsonl` (`message.usage`, deduped by message id) | verified |
+| Codex CLI | `~/.codex/sessions/**/*.jsonl` (`token_count` → `last_token_usage`) | verified |
+| Gemini CLI | `~/.gemini/tmp/*/chats/*.json` (`tokens` field) | format from Gemini CLI source; not exercised locally |
+| Zed Agent (native panel) | `~/Library/Application Support/Zed/threads/threads.db` — zstd JSON, `request_token_usage` (needs `brew install zstd`) | verified; no per-message timestamps → attributed to thread `updated_at` |
+| OpenCode | `~/.local/share/opencode/storage/message/*/*.json` (`tokens`, `modelID`) | **unverified** — written from the documented JSON layout; please open an issue with a sample if it misparses |
+| Qwen Code | `~/.qwen/tmp/*/chats/*.json` (Gemini CLI fork, same layout) | unverified |
+
+Providers with no local files are hidden automatically. Adding one = implement `UsageSource` (roots, matches, parse) + a `Provider` case.
 
 Providers without local data are hidden. Features: Today / 7d / 30d / All windows, input/output/cache breakdown, 14-day sparkline,
 per-model cost (tap a card), launch-at-login, auto refresh every 60 s. Light / dark / system theme (⚙️ menu). UI in **English or Thai** — follows the system language (Thai → ไทย, anything else → English), overridable in ⚙️ → Language.
