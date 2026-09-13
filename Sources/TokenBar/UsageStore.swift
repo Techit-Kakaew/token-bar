@@ -33,6 +33,13 @@ final class UsageStore: ObservableObject {
     @Published var menuBarProvider: Provider? = Provider(rawValue: UserDefaults.standard.string(forKey: "menuBarProvider") ?? "") {
         didSet { UserDefaults.standard.set(menuBarProvider?.rawValue ?? "", forKey: "menuBarProvider") }
     }
+    /// Providers worth showing for the current window: has usage in it, or has rate-limit gauges.
+    var visibleProviders: [Provider] {
+        Provider.allCases.filter { p in
+            guard let s = stats[p], s.available else { return false }
+            return s.stats(window).total > 0 || !(limits[p]?.limits.isEmpty ?? true)
+        }
+    }
     /// Tokens shown in the menu bar: selected provider only, or the sum.
     var menuBarTokens: Int {
         if let p = menuBarProvider { return stats[p]?.stats(window).total ?? 0 }

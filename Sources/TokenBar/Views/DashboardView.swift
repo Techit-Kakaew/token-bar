@@ -29,7 +29,7 @@ struct DashboardView: View {
     enum Metric: String, CaseIterable, Identifiable { case tokens = "Tokens", cost = "Cost"; var id: String { rawValue } }
 
     private func color(_ p: Provider) -> Color { let (r, g, b) = p.accent; return Color(red: r, green: g, blue: b) }
-    private var providers: [Provider] { Provider.allCases.filter { store.stats[$0]?.available == true } }
+    private var providers: [Provider] { store.visibleProviders }
 
     var body: some View {
         Group {

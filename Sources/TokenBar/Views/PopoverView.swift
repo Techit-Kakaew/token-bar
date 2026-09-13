@@ -49,15 +49,15 @@ struct PopoverView: View {
         }
     }
 
-    /// Providers with local data on this Mac; the rest are hidden entirely.
-    private var visibleProviders: [Provider] { Provider.allCases.filter { store.stats[$0]?.available == true } }
+    private var visibleProviders: [Provider] { store.visibleProviders }
 
     private var cards: some View {
         VStack(spacing: 8) {
             if visibleProviders.isEmpty {
+                let anyData = Provider.allCases.contains { store.stats[$0]?.available == true }
                 VStack(alignment: .leading, spacing: 6) {
-                    Text(L("No local data found")).font(.system(size: 13, weight: .semibold))
-                    Text(L("nodata.hint")).font(.system(size: 11)).foregroundStyle(.secondary)
+                    Text(L(anyData ? "nodata.window" : "No local data found")).font(.system(size: 13, weight: .semibold))
+                    if !anyData { Text(L("nodata.hint")).font(.system(size: 11)).foregroundStyle(.secondary) }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(12)
