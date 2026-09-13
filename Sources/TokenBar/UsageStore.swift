@@ -13,6 +13,24 @@ final class UsageStore: ObservableObject {
     let breaks = BreakReminder()
     let alerts = LimitAlerts()
     let updates = UpdateChecker()
+    let budget = Budget()
+    let hotkeys = HotKeys()
+    @Published var hotkeyPopover: String = UserDefaults.standard.string(forKey: "hotkey.popover") ?? "⌥⇧T" {
+        didSet { UserDefaults.standard.set(hotkeyPopover, forKey: "hotkey.popover"); bindHotkeys() }
+    }
+    @Published var hotkeyDashboard: String = UserDefaults.standard.string(forKey: "hotkey.dashboard") ?? "Off" {
+        didSet { UserDefaults.standard.set(hotkeyDashboard, forKey: "hotkey.dashboard"); bindHotkeys() }
+    }
+    /// Set by the App so the dashboard hotkey can open the window scene.
+    var openDashboard: (() -> Void)?
+
+    func bindHotkeys() {
+        hotkeys.bind(id: 1, combo: .named(hotkeyPopover)) { HotKeys.toggleStatusItem() }
+        hotkeys.bind(id: 2, combo: .named(hotkeyDashboard)) { [weak self] in self?.openDashboard?(); NSApp.activate(ignoringOtherApps: true) }
+    }
+
+    var todaySpend: Double { Provider.allCases.reduce(0) { $0 + (stats[$1]?.stats(.today).cost ?? 0) } }
+    var weekSpend: Double { Provider.allCases.reduce(0) { $0 + (stats[$1]?.stats(.week).cost ?? 0) } }
     @Published var onboarded: Bool = UserDefaults.standard.bool(forKey: "onboarded") {
         didSet { UserDefaults.standard.set(onboarded, forKey: "onboarded") }
     }
@@ -105,6 +123,8 @@ final class UsageStore: ObservableObject {
         breaks.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() }.store(in: &bag)
         alerts.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() }.store(in: &bag)
         updates.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() }.store(in: &bag)
+        budget.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() }.store(in: &bag)
+        bindHotkeys()
         refresh()
         updates.autoCheck()
         timer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
@@ -147,6 +167,7 @@ final class UsageStore: ObservableObject {
                 self.stats = final
                 self.recentEvents = recentEv
                 self.breaks.update(with: recentTs)
+                self.budget.update(todaySpend: self.todaySpend, weekSpend: self.weekSpend)
                 self.limits[.codex] = codexLimits
                 self.alerts.update(self.limits)
                 self.lastRefresh = Date()

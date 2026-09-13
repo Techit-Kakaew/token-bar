@@ -121,8 +121,38 @@ struct PopoverView: View {
                     .lineLimit(1).fixedSize()
             }
             streakRow
+            budgetRows
         }
         .padding(12)
+        .onAppear { store.openDashboard = { openWindow(id: "dashboard") } }
+    }
+
+    @ViewBuilder
+    private var budgetRows: some View {
+        if let t = store.budget.today { budgetRow(L("day"), t) }
+        if let w = store.budget.week { budgetRow(L("week"), w) }
+    }
+
+    private func budgetRow(_ label: String, _ s: Budget.Status) -> some View {
+        let color: Color = s.ratio >= 1 ? Color(red: 1.0, green: 0.35, blue: 0.35)
+            : (s.ratio >= 0.8 ? Color(red: 1.0, green: 0.72, blue: 0.3) : Color(red: 0.55, green: 0.65, blue: 1.0))
+        return HStack(spacing: 8) {
+            Image(systemName: "banknote").font(.system(size: 10)).foregroundStyle(color)
+            Text(label).font(.system(size: 11, weight: .medium)).frame(width: 70, alignment: .leading)
+            GeometryReader { g in
+                ZStack(alignment: .leading) {
+                    Capsule().fill(.primary.opacity(0.08))
+                    Capsule().fill(color).frame(width: max(3, g.size.width * CGFloat(min(s.ratio, 1))))
+                }
+            }.frame(height: 6)
+            Text(L("budget.row %@ %@", s.spent.usd, s.limit.usd))
+                .font(.system(size: 10.5, design: .monospaced)).foregroundStyle(.secondary).lineLimit(1).fixedSize()
+            Text("\(Int((s.ratio * 100).rounded()))%")
+                .font(.system(size: 11, weight: .bold, design: .rounded)).monospacedDigit().foregroundStyle(color)
+                .frame(width: 40, alignment: .trailing)
+        }
+        .padding(.horizontal, 10).padding(.vertical, 5)
+        .glassCard(accent: s.ratio >= 0.8 ? color : nil, radius: 8)
     }
 
     @ViewBuilder
@@ -187,6 +217,20 @@ struct PopoverView: View {
                 Text(L("System")).tag("system")
                 Text("ไทย").tag("th")
                 Text("English").tag("en")
+            }
+            Divider()
+            Picker(L("Daily budget"), selection: Binding(get: { store.budget.daily }, set: { store.budget.daily = $0 })) {
+                ForEach(Budget.presets, id: \.self) { Text($0 == 0 ? L("Off") : $0.usd).tag($0) }
+            }
+            Picker(L("Weekly budget"), selection: Binding(get: { store.budget.weekly }, set: { store.budget.weekly = $0 })) {
+                ForEach(Budget.presets, id: \.self) { Text($0 == 0 ? L("Off") : $0.usd).tag($0) }
+            }
+            Divider()
+            Picker(L("Hotkey: popover"), selection: Binding(get: { store.hotkeyPopover }, set: { store.hotkeyPopover = $0 })) {
+                ForEach(HotKeys.Combo.presets, id: \.label) { Text($0.label == "Off" ? L("Off") : $0.label).tag($0.label) }
+            }
+            Picker(L("Hotkey: dashboard"), selection: Binding(get: { store.hotkeyDashboard }, set: { store.hotkeyDashboard = $0 })) {
+                ForEach(HotKeys.Combo.presets, id: \.label) { Text($0.label == "Off" ? L("Off") : $0.label).tag($0.label) }
             }
             Divider()
             Picker(L("Limit alert at"), selection: Binding(get: { store.alerts.warnPercent }, set: { store.alerts.warnPercent = $0 })) {

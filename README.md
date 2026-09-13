@@ -76,6 +76,11 @@ Each card splits usage by where the call came from:
 
 Gauges turn amber ≥70 %, red ≥90 %.
 
+## Hotkeys & budgets
+
+- Global hotkeys (⚙️): toggle the popover (default `⌥⇧T`) and open the dashboard (off by default). Carbon hotkeys — no Accessibility permission needed.
+- Daily / weekly spend budgets (⚙️): progress bar under the totals, notification at 80 % and 100 % once per day / week. Amounts are list-price estimates.
+
 ## Limit alerts
 
 Notification when any 5h / weekly window crosses 80 % (configurable: off / 70 / 80 / 90) and again at 95 %,

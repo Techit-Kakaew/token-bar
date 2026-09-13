@@ -98,3 +98,10 @@ struct ProviderLogoView: View {
         }
     }
 }
+
+/// Hands the App's `openWindow` action to the store so a global hotkey can open the dashboard.
+private struct DashboardOpener: View {
+    let store: UsageStore
+    @Environment(\.openWindow) private var openWindow
+    var body: some View { Color.clear.onAppear { store.openDashboard = { openWindow(id: "dashboard") } } }
+}

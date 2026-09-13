@@ -91,6 +91,16 @@ enum L10n {
         "update.error": ("Could not check for updates", "ตรวจสอบอัปเดตไม่ได้"),
         "update.badge %@": ("v%@ available", "มี v%@"),
         "Download": ("Download", "ดาวน์โหลด"), "Later": ("Later", "ไว้ก่อน"),
+        // hotkeys / budget
+        "Hotkey: popover": ("Hotkey · toggle popover", "คีย์ลัด · เปิด/ปิด popover"),
+        "Hotkey: dashboard": ("Hotkey · dashboard", "คีย์ลัด · แดชบอร์ด"),
+        "Off": ("Off", "ปิด"),
+        "Daily budget": ("Daily budget", "งบต่อวัน"), "Weekly budget": ("Weekly budget", "งบต่อสัปดาห์"),
+        "budget.row %@ %@": ("%@ of %@", "%@ จาก %@"),
+        "budget.warn %@ %d": ("%@ budget at %d%% 🟠", "งบ%@ ถึง %d%% แล้ว 🟠"),
+        "budget.over %@": ("%@ budget exceeded 🔴", "งบ%@ เกินแล้ว 🔴"),
+        "budget.body %@ %@": ("Spent %@ of your %@ budget (list-price estimate).", "ใช้ไป %@ จากงบ %@ (ประมาณจากราคา API)"),
+        "day": ("today", "วันนี้"), "week": ("this week", "สัปดาห์นี้"),
         // dashboard
         "DAILY USAGE": ("DAILY USAGE", "การใช้งานรายวัน"),
         "click a bar to drill down": ("click a bar to drill down", "คลิกแท่งเพื่อดูรายวัน"),
