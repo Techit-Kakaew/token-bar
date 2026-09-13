@@ -23,7 +23,7 @@ Reads local logs only — no API keys, no network.
 | Gemini CLI | `~/.gemini/tmp/*/chats/*.json` (`tokens` field) |
 
 Features: Today / 7d / 30d / All windows, input/output/cache breakdown, 14-day sparkline,
-per-model cost (tap a card), launch-at-login, auto refresh every 60 s. Light / dark / system theme (⚙️ menu).
+per-model cost (tap a card), launch-at-login, auto refresh every 60 s. Light / dark / system theme (⚙️ menu). UI in **English or Thai** — follows the system language (Thai → ไทย, anything else → English), overridable in ⚙️ → Language.
 Menu-bar item can show the combined total or a single provider (its logo + tokens + worst limit) — ⚙️ → "แสดงบน menubar".
 
 ## Dashboard window

@@ -25,6 +25,7 @@ struct PopoverView: View {
             footer
         }
         .frame(width: 380)
+        .environment(\.locale, L10n.current.locale)
         .background { if !isSnapshot { WindowGlassTuner(material: .hudWindow) } }
     }
 
@@ -71,7 +72,7 @@ struct PopoverView: View {
                     .font(.system(size: 30, weight: .black, design: .rounded))
                     .lineLimit(1).fixedSize()
                     .contentTransition(.numericText())
-                Text("tokens")
+                Text(L("tokens"))
                     .font(.system(size: 12)).foregroundStyle(.tertiary)
                 Spacer()
                 Text("≈ \(store.totalCost.usd)")
@@ -89,11 +90,11 @@ struct PopoverView: View {
         if let s = store.breaks.streak {
             let mins = Int(s.duration / 60)
             let over = mins >= store.breaks.thresholdMinutes
-            let dur = mins >= 60 ? "\(mins / 60)h \(mins % 60)m" : "\(mins)m"
+            let dur = mins >= 60 ? L("%dh %dm", mins / 60, mins % 60) : L("%dm", mins)
             HStack(spacing: 6) {
                 Image(systemName: over ? "cup.and.saucer.fill" : "flame.fill")
                     .font(.system(size: 10))
-                Text(over ? "ใช้ต่อเนื่อง \(dur) — พักหน่อยไหม" : "streak \(dur)")
+                Text(over ? L("streak over %@", dur) : L("streak %@", dur))
                     .font(.system(size: 11, weight: .medium))
                 Spacer()
             }
@@ -108,7 +109,7 @@ struct PopoverView: View {
         if isSnapshot {
             HStack(spacing: 2) {
                 ForEach(Window.allCases) { w in
-                    Text(w.rawValue).font(.system(size: 11, weight: .semibold))
+                    Text(w.label).font(.system(size: 11, weight: .semibold))
                         .padding(.horizontal, 7).padding(.vertical, 3)
                         .background(RoundedRectangle(cornerRadius: 5).fill(w == store.window ? Color.primary.opacity(0.18) : Color.clear))
                 }
@@ -117,49 +118,54 @@ struct PopoverView: View {
             .background(RoundedRectangle(cornerRadius: 7).fill(.primary.opacity(0.06)))
         } else {
             Picker("", selection: $store.window) {
-                ForEach(Window.allCases) { Text($0.rawValue).tag($0) }
+                ForEach(Window.allCases) { Text($0.label).tag($0) }
             }
             .pickerStyle(.segmented)
             .controlSize(.small)
-            .frame(width: 170)
+            .frame(width: 190)
         }
     }
 
     private var settingsMenu: some View {
         Menu {
-            Toggle("เปิดตอน Login", isOn: $launchAtLogin)
+            Toggle(L("Launch at login"), isOn: $launchAtLogin)
                 .onChange(of: launchAtLogin) { _, on in
                     do { on ? try SMAppService.mainApp.register() : try SMAppService.mainApp.unregister() }
                     catch { launchAtLogin = SMAppService.mainApp.status == .enabled }
                 }
-            Toggle("แสดงตัวเลขบน menubar", isOn: Binding(get: { store.showNumberInBar }, set: { store.showNumberInBar = $0 }))
-            Picker("แสดงบน menubar", selection: Binding(get: { store.menuBarProvider?.rawValue ?? "all" },
+            Toggle(L("Show number in menu bar"), isOn: Binding(get: { store.showNumberInBar }, set: { store.showNumberInBar = $0 }))
+            Picker(L("Menu bar shows"), selection: Binding(get: { store.menuBarProvider?.rawValue ?? "all" },
                                                          set: { store.menuBarProvider = Provider(rawValue: $0) })) {
-                Text("รวมทุกเจ้า").tag("all")
+                Text(L("All providers")).tag("all")
                 ForEach(Provider.allCases) { Text($0.displayName).tag($0.rawValue) }
             }
-            Picker("ธีม", selection: Binding(get: { store.appearance }, set: { store.appearance = $0 })) {
+            Picker(L("Theme"), selection: Binding(get: { store.appearance }, set: { store.appearance = $0 })) {
                 ForEach(UsageStore.Appearance.allCases) { Text($0.label).tag($0) }
             }
-            Divider()
-            Picker("เตือน limit เมื่อถึง", selection: Binding(get: { store.alerts.warnPercent }, set: { store.alerts.warnPercent = $0 })) {
-                Text("ปิด (เฉพาะ 95%)").tag(0)
-                ForEach([70, 80, 90], id: \.self) { Text("\($0)%  + 95%").tag($0) }
+            Picker(L("Language"), selection: Binding(get: { store.language }, set: { store.language = $0 })) {
+                Text(L("System")).tag("system")
+                Text("ไทย").tag("th")
+                Text("English").tag("en")
             }
             Divider()
-            Toggle("เตือนให้พัก", isOn: Binding(get: { store.breaks.enabled }, set: { store.breaks.enabled = $0 }))
-            Picker("เตือนหลังใช้ต่อเนื่อง", selection: Binding(get: { store.breaks.thresholdMinutes }, set: { store.breaks.thresholdMinutes = $0 })) {
-                ForEach([45, 60, 90, 120, 180], id: \.self) { Text("\($0) นาที").tag($0) }
+            Picker(L("Limit alert at"), selection: Binding(get: { store.alerts.warnPercent }, set: { store.alerts.warnPercent = $0 })) {
+                Text(L("Off (95% only)")).tag(0)
+                ForEach([70, 80, 90], id: \.self) { Text(L("%d%% + 95%%", $0)).tag($0) }
             }
-            Picker("เตือนซ้ำทุก", selection: Binding(get: { store.breaks.repeatMinutes }, set: { store.breaks.repeatMinutes = $0 })) {
-                ForEach([15, 30, 45, 60], id: \.self) { Text("\($0) นาที").tag($0) }
+            Divider()
+            Toggle(L("Break reminder"), isOn: Binding(get: { store.breaks.enabled }, set: { store.breaks.enabled = $0 }))
+            Picker(L("Remind after"), selection: Binding(get: { store.breaks.thresholdMinutes }, set: { store.breaks.thresholdMinutes = $0 })) {
+                ForEach([45, 60, 90, 120, 180], id: \.self) { Text(L("%d min", $0)).tag($0) }
             }
-            Picker("ถือว่าพักเมื่อเว้น", selection: Binding(get: { store.breaks.idleGapMinutes }, set: { store.breaks.idleGapMinutes = $0 })) {
-                ForEach([10, 15, 20, 30], id: \.self) { Text("\($0) นาที").tag($0) }
+            Picker(L("Repeat every"), selection: Binding(get: { store.breaks.repeatMinutes }, set: { store.breaks.repeatMinutes = $0 })) {
+                ForEach([15, 30, 45, 60], id: \.self) { Text(L("%d min", $0)).tag($0) }
+            }
+            Picker(L("Idle gap = break"), selection: Binding(get: { store.breaks.idleGapMinutes }, set: { store.breaks.idleGapMinutes = $0 })) {
+                ForEach([10, 15, 20, 30], id: \.self) { Text(L("%d min", $0)).tag($0) }
             }
             if store.breaks.permissionDenied {
                 Divider()
-                Button("เปิดสิทธิ์ Notification…") {
+                Button(L("Open Notification settings…")) {
                     NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.Notifications-Settings.extension")!)
                 }
             }
@@ -176,7 +182,7 @@ struct PopoverView: View {
                 openWindow(id: "dashboard")
                 NSApp.activate(ignoringOtherApps: true)
             } label: {
-                Label("Dashboard", systemImage: "rectangle.3.group")
+                Label(L("Dashboard"), systemImage: "rectangle.3.group")
                     .font(.system(size: 11, weight: .semibold))
                     .padding(.horizontal, 9).padding(.vertical, 5)
                     .glassCard(radius: 7, interactive: true)
@@ -184,7 +190,7 @@ struct PopoverView: View {
             .buttonStyle(.plain)
             Spacer()
             if let t = store.lastRefresh {
-                Text("updated \(t, style: .time)")
+                Text(L("updated %@", t.formatted(date: .omitted, time: .shortened)))
                     .font(.system(size: 10, design: .monospaced)).foregroundStyle(.tertiary)
                     .lineLimit(1).fixedSize()
             }

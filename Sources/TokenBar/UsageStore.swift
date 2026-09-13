@@ -17,13 +17,17 @@ final class UsageStore: ObservableObject {
     enum Appearance: String, CaseIterable, Identifiable {
         case system, light, dark
         var id: String { rawValue }
-        var label: String { switch self { case .system: return "ตามระบบ"; case .light: return "สว่าง"; case .dark: return "มืด" } }
+        var label: String { switch self { case .system: return L("System"); case .light: return L("Light"); case .dark: return L("Dark") } }
         var nsAppearance: NSAppearance? {
             switch self { case .system: return nil; case .light: return NSAppearance(named: .aqua); case .dark: return NSAppearance(named: .darkAqua) }
         }
     }
     @Published var appearance: Appearance = Appearance(rawValue: UserDefaults.standard.string(forKey: "appearance") ?? "") ?? .system {
         didSet { UserDefaults.standard.set(appearance.rawValue, forKey: "appearance"); NSApp.appearance = appearance.nsAppearance }
+    }
+    /// "system" | "en" | "th"
+    @Published var language: String = UserDefaults.standard.string(forKey: "language") ?? "system" {
+        didSet { UserDefaults.standard.set(language, forKey: "language"); L10n.current = L10n.resolve(override: language) }
     }
     /// Which provider the menu-bar item represents (nil = all combined).
     @Published var menuBarProvider: Provider? = Provider(rawValue: UserDefaults.standard.string(forKey: "menuBarProvider") ?? "") {
@@ -61,6 +65,7 @@ final class UsageStore: ObservableObject {
 
     init() {
         Self.migrateDefaultsIfNeeded()
+        L10n.current = L10n.resolve(override: language)
         if let w = UserDefaults.standard.string(forKey: "window"), let win = Window(rawValue: w) {
             window = win
         }

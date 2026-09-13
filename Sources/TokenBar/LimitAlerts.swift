@@ -67,11 +67,11 @@ final class LimitAlerts: ObservableObject {
         guard Self.canNotify else { return }
         let c = UNMutableNotificationContent()
         c.title = threshold >= Self.criticalPercent
-            ? "\(p.displayName) \(l.name) limit ใกล้เต็ม 🔴"
-            : "\(p.displayName) \(l.name) limit \(Int(l.percent))% 🟠"
+            ? L("limit.critical %@ %@", p.displayName, l.name)
+            : L("limit.warn %@ %@ %d", p.displayName, l.name, Int(l.percent))
         c.body = l.resetText.isEmpty
-            ? "ใช้ไป \(Int(l.percent))% แล้ว"
-            : "ใช้ไป \(Int(l.percent))% แล้ว · reset อีก \(l.resetText)"
+            ? L("limit.body %d", Int(l.percent))
+            : L("limit.body %d %@", Int(l.percent), l.resetText)
         c.sound = threshold >= Self.criticalPercent ? .defaultCritical : .default
         UNUserNotificationCenter.current().add(
             UNNotificationRequest(identifier: "tokenbar.limit.\(p.rawValue).\(l.name)", content: c, trigger: nil))

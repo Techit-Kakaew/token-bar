@@ -87,6 +87,7 @@ struct TokenBreakdown {
 enum Window: String, CaseIterable, Identifiable {
     case today = "Today", week = "7d", month = "30d", all = "All"
     var id: String { rawValue }
+    var label: String { L(rawValue) }
 
     func contains(_ d: Date, now: Date = Date()) -> Bool {
         let cal = Calendar.current
@@ -150,10 +151,10 @@ extension Date {
     var agoShort: String {
         let s = Int(-timeIntervalSinceNow)
         switch s {
-        case ..<60: return "\(max(s, 0))s ago"
-        case ..<3600: return "\(s / 60)m ago"
-        case ..<86400: return "\(s / 3600)h ago"
-        default: return "\(s / 86400)d ago"
+        case ..<60: return L("%ds ago", max(s, 0))
+        case ..<3600: return L("%dm ago", s / 60)
+        case ..<86400: return L("%dh ago", s / 3600)
+        default: return L("%dd ago", s / 86400)
         }
     }
 }

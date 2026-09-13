@@ -71,10 +71,10 @@ final class BreakReminder: ObservableObject {
     private func notify(minutes: Int) {
         guard Self.canNotify else { return }
         let h = minutes / 60, m = minutes % 60
-        let dur = h > 0 ? "\(h) ชม. \(m) นาที" : "\(m) นาที"
+        let dur = h > 0 ? L("dur.hm", h, m) : L("dur.m", m)
         let content = UNMutableNotificationContent()
-        content.title = "พักสายตาหน่อย ☕️"
-        content.body = "ใช้ AI ต่อเนื่องมา \(dur) แล้ว ลุกยืดเส้น ดื่มน้ำ แล้วค่อยกลับมา"
+        content.title = L("break.title")
+        content.body = L("break.body %@", dur)
         content.sound = .default
         let req = UNNotificationRequest(identifier: "tokenbar.break", content: content, trigger: nil)
         UNUserNotificationCenter.current().add(req)

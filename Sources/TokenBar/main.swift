@@ -92,6 +92,7 @@ if let i = CommandLine.arguments.firstIndex(of: "--snapshot-dashboard"), i + 1 <
     let out = URL(fileURLWithPath: CommandLine.arguments[i + 1])
     Task { @MainActor in
         let store = UsageStore()
+        if let lang = ProcessInfo.processInfo.environment["TOKENBAR_SNAPSHOT_LANG"] { L10n.current = L10n.resolve(override: lang) }
         while store.lastRefresh == nil { try? await Task.sleep(for: .milliseconds(100)) }
         try? await Task.sleep(for: .milliseconds(300))
         let light = ProcessInfo.processInfo.environment["TOKENBAR_SNAPSHOT_SCHEME"] == "light"
@@ -113,6 +114,7 @@ if let i = CommandLine.arguments.firstIndex(of: "--snapshot"), i + 1 < CommandLi
     let out = URL(fileURLWithPath: CommandLine.arguments[i + 1])
     Task { @MainActor in
         let store = UsageStore()
+        if let lang = ProcessInfo.processInfo.environment["TOKENBAR_SNAPSHOT_LANG"] { L10n.current = L10n.resolve(override: lang) }
         while store.lastRefresh == nil { try? await Task.sleep(for: .milliseconds(100)) }
         try? await Task.sleep(for: .milliseconds(300))
         let light = ProcessInfo.processInfo.environment["TOKENBAR_SNAPSHOT_SCHEME"] == "light"

@@ -22,8 +22,8 @@ struct DashboardView: View {
 
     private var dayLabel: String {
         guard let d = selectedDay else { return "" }
-        let f = DateFormatter(); f.dateFormat = "EEE d MMM"
-        return Calendar.current.isDateInToday(d) ? "Today" : f.string(from: d)
+        let f = DateFormatter(); f.locale = L10n.current.locale; f.dateFormat = "EEE d MMM"
+        return Calendar.current.isDateInToday(d) ? L("Today") : f.string(from: d)
     }
 
     enum Metric: String, CaseIterable, Identifiable { case tokens = "Tokens", cost = "Cost"; var id: String { rawValue } }
@@ -36,6 +36,7 @@ struct DashboardView: View {
             if isSnapshot { content } else { ScrollView { content } }
         }
         .frame(minWidth: 860, minHeight: 560)
+        .environment(\.locale, L10n.current.locale)
         .background {
             if isSnapshot { Color.clear } else {
                 ZStack { VisualEffect(material: .sidebar).ignoresSafeArea(); WindowGlassTuner(material: .sidebar) }
@@ -50,13 +51,13 @@ struct DashboardView: View {
             if selectedDay != nil { dayBanner }
             HStack(alignment: .top, spacing: 14) {
                 if selectedDay != nil {
-                    listCard("PROJECTS · \(dayLabel)", icon: "folder", rows: dayRows(\.project))
-                    listCard("MODELS · \(dayLabel)", icon: "cpu", rows: dayRows(\.model))
-                    listCard("SOURCES · \(dayLabel)", icon: "app.connected.to.app.below.fill", rows: dayRows(\.source))
+                    listCard("\(L("PROJECTS")) · \(dayLabel)", icon: "folder", rows: dayRows(\.project))
+                    listCard("\(L("MODELS")) · \(dayLabel)", icon: "cpu", rows: dayRows(\.model))
+                    listCard("\(L("SOURCES")) · \(dayLabel)", icon: "app.connected.to.app.below.fill", rows: dayRows(\.source))
                 } else {
-                    listCard("PROJECTS", icon: "folder", rows: mergedRows { $0.projects(store.window) })
-                    listCard("MODELS", icon: "cpu", rows: modelRows)
-                    listCard("SOURCES", icon: "app.connected.to.app.below.fill", rows: mergedRows { $0.sources(store.window) })
+                    listCard(L("PROJECTS"), icon: "folder", rows: mergedRows { $0.projects(store.window) })
+                    listCard(L("MODELS"), icon: "cpu", rows: modelRows)
+                    listCard(L("SOURCES"), icon: "app.connected.to.app.below.fill", rows: mergedRows { $0.sources(store.window) })
                 }
             }
             providerRow
@@ -72,7 +73,7 @@ struct DashboardView: View {
                 Text("TOKENBAR · DASHBOARD").font(.system(size: 11, weight: .heavy)).tracking(2).foregroundStyle(.secondary)
                 HStack(alignment: .lastTextBaseline, spacing: 10) {
                     Text(store.totalTokens.compact).font(.system(size: 40, weight: .black, design: .rounded)).contentTransition(.numericText())
-                    Text("tokens").font(.system(size: 14)).foregroundStyle(.tertiary)
+                    Text(L("tokens")).font(.system(size: 14)).foregroundStyle(.tertiary)
                     Text("≈ \(store.totalCost.usd)").font(.system(size: 22, weight: .bold, design: .rounded)).foregroundStyle(.secondary)
                 }
             }
@@ -92,12 +93,12 @@ struct DashboardView: View {
             }
             if !isSnapshot {
                 Picker("", selection: $store.window) {
-                    ForEach(Window.allCases) { Text($0.rawValue).tag($0) }
+                    ForEach(Window.allCases) { Text($0.label).tag($0) }
                 }
-                .pickerStyle(.segmented).frame(width: 220)
+                .pickerStyle(.segmented).frame(width: 240)
                 exportMenu
             } else {
-                Text(store.window.rawValue).font(.system(size: 12, weight: .semibold)).padding(6)
+                Text(store.window.label).font(.system(size: 12, weight: .semibold)).padding(6)
                     .background(RoundedRectangle(cornerRadius: 6).fill(.primary.opacity(0.1)))
             }
         }
@@ -107,20 +108,20 @@ struct DashboardView: View {
 
     private var exportMenu: some View {
         Menu {
-            Button("Events CSV\(selectedDay != nil ? " · \(dayLabel)" : " · last 30 days")") {
+            Button(L("Events CSV") + (selectedDay != nil ? " · \(dayLabel)" : " " + L("· last 30 days"))) {
                 let ev = selectedDay != nil ? dayEvents : store.recentEvents
                 let suffix = selectedDay.map { Exporter_dayStamp($0) } ?? "30d"
                 Exporter.save(Exporter.eventsCSV(ev), suggested: "tokenbar-events-\(suffix).csv", type: "csv")
             }
-            Button("Daily summary CSV · last 30 days") {
+            Button(L("Daily summary CSV · last 30 days")) {
                 Exporter.save(Exporter.dailyCSV(store.stats), suggested: "tokenbar-daily-\(Exporter.stamp()).csv", type: "csv")
             }
-            Button("Markdown report · \(store.window.rawValue)") {
+            Button(L("Markdown report · %@", store.window.label)) {
                 Exporter.save(Exporter.markdown(stats: store.stats, window: store.window, limits: store.limits),
                               suggested: "tokenbar-report-\(store.window.rawValue.lowercased())-\(Exporter.stamp()).md", type: "md")
             }
         } label: {
-            Label("Export", systemImage: "square.and.arrow.up").font(.system(size: 12, weight: .semibold))
+            Label(L("Export"), systemImage: "square.and.arrow.up").font(.system(size: 12, weight: .semibold))
         }
         .menuStyle(.borderlessButton).fixedSize()
     }
@@ -150,15 +151,15 @@ struct DashboardView: View {
     private var chartCard: some View {
         card {
             HStack {
-                sectionTitle("DAILY USAGE", icon: "chart.bar.fill")
-                Text("click a bar to drill down").font(.system(size: 10)).foregroundStyle(.tertiary)
+                sectionTitle(L("DAILY USAGE"), icon: "chart.bar.fill")
+                Text(L("click a bar to drill down")).font(.system(size: 10)).foregroundStyle(.tertiary)
                 Spacer()
                 if !isSnapshot {
                     Picker("", selection: $chartRange) {
                         Text("7d").tag(7); Text("14d").tag(14); Text("30d").tag(30)
                     }.pickerStyle(.segmented).frame(width: 150)
                     Picker("", selection: $metric) {
-                        ForEach(Metric.allCases) { Text($0.rawValue).tag($0) }
+                        ForEach(Metric.allCases) { Text(L($0.rawValue)).tag($0) }
                     }.pickerStyle(.segmented).frame(width: 140)
                 }
             }
@@ -225,9 +226,9 @@ struct DashboardView: View {
             Image(systemName: "calendar").foregroundStyle(.secondary)
             Text(dayLabel).font(.system(size: 13, weight: .semibold))
             Text(total.compact).font(.system(size: 13, design: .monospaced))
-            Text("tokens").font(.system(size: 11)).foregroundStyle(.tertiary)
+            Text(L("tokens")).font(.system(size: 11)).foregroundStyle(.tertiary)
             Text("≈ \(cost.usd)").font(.system(size: 13, weight: .semibold, design: .monospaced)).foregroundStyle(.secondary)
-            Text("· \(ev.count) calls").font(.system(size: 11, design: .monospaced)).foregroundStyle(.tertiary)
+            Text("· " + L("%d calls", ev.count)).font(.system(size: 11, design: .monospaced)).foregroundStyle(.tertiary)
             ForEach(providers) { p in
                 let t = ev.filter { $0.provider == p }.reduce(0) { $0 + $1.total }
                 if t > 0 {
@@ -241,7 +242,7 @@ struct DashboardView: View {
             Button {
                 withAnimation(.snappy(duration: 0.2)) { selectedDay = nil }
             } label: {
-                Label("Back to \(store.window.rawValue)", systemImage: "xmark")
+                Label(L("Back to %@", store.window.label), systemImage: "xmark")
                     .font(.system(size: 11, weight: .semibold))
                     .padding(.horizontal, 9).padding(.vertical, 5)
                     .glassCard(radius: 7, interactive: true)
@@ -298,7 +299,7 @@ struct DashboardView: View {
         card {
             sectionTitle(title, icon: icon)
             if rows.isEmpty {
-                Text("no data").font(.system(size: 12)).foregroundStyle(.tertiary).padding(.vertical, 8)
+                Text(L("no data")).font(.system(size: 12)).foregroundStyle(.tertiary).padding(.vertical, 8)
             } else {
                 let maxV = max(rows.first?.stats.total ?? 1, 1)
                 VStack(spacing: 8) {
@@ -337,13 +338,13 @@ struct DashboardView: View {
                             ProviderLogoView(provider: p, size: 14).foregroundStyle(color(p))
                             Text(p.displayName).font(.system(size: 13, weight: .semibold))
                             Spacer()
-                            Text("\(b.calls) calls").font(.system(size: 11, design: .monospaced)).foregroundStyle(.tertiary)
+                            Text(L("%d calls", b.calls)).font(.system(size: 11, design: .monospaced)).foregroundStyle(.tertiary)
                         }
                         Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 4) {
-                            stat("Input", b.input, color(p))
-                            stat("Output", b.output, color(p).opacity(0.7))
-                            stat("Cache read", b.cacheRead, .primary.opacity(0.3))
-                            stat("Cache write", b.cacheWrite, .primary.opacity(0.5))
+                            stat(L("Input"), b.input, color(p))
+                            stat(L("Output"), b.output, color(p).opacity(0.7))
+                            stat(L("Cache read"), b.cacheRead, .primary.opacity(0.3))
+                            stat(L("Cache write"), b.cacheWrite, .primary.opacity(0.5))
                         }
                         if let l = store.limits[p], !l.limits.isEmpty {
                             Divider().opacity(0.3)

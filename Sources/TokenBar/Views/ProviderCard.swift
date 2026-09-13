@@ -16,14 +16,14 @@ struct ProviderCard: View {
         VStack(alignment: .leading, spacing: 10) {
             header
             if let limits, !limits.limits.isEmpty { limitGauges(limits) }
-            else if let err = limits?.error { Text("limits: \(err)").font(.system(size: 10.5)).foregroundStyle(.tertiary) }
+            else if let err = limits?.error { Text(L("limits: %@", err)).font(.system(size: 10.5)).foregroundStyle(.tertiary) }
             if stats.available {
                 mainNumbers
                 breakdownBar
                 sourceList
                 if expanded { modelList }
             } else {
-                Text("No local data found")
+                Text(L("No local data found"))
                     .font(.system(size: 12)).foregroundStyle(.tertiary)
             }
         }
@@ -89,10 +89,10 @@ struct ProviderCard: View {
                     Text(plan.uppercased()).font(.system(size: 9, weight: .heavy)).tracking(1).foregroundStyle(.tertiary)
                 }
                 if let err = l.error {
-                    Text("· stale: \(err)").font(.system(size: 9)).foregroundStyle(Color(red: 1.0, green: 0.72, blue: 0.3).opacity(0.8))
+                    Text(L("· stale: %@", err)).font(.system(size: 9)).foregroundStyle(Color(red: 1.0, green: 0.72, blue: 0.3).opacity(0.8))
                         .lineLimit(1).minimumScaleFactor(0.8)
                 } else if let t = l.fetchedAt, Date().timeIntervalSince(t) > 3600 {
-                    Text("· as of \(t.agoShort)").font(.system(size: 9)).foregroundStyle(.tertiary)
+                    Text(L("· as of %@", t.agoShort)).font(.system(size: 9)).foregroundStyle(.tertiary)
                 }
                 Spacer()
             }
@@ -115,7 +115,7 @@ struct ProviderCard: View {
                     .font(.system(size: 28, weight: .bold, design: .rounded))
                     .monospacedDigit()
                     .contentTransition(.numericText())
-                Text("tokens · \(bd.calls) calls")
+                Text(L("tokens · %d calls", bd.calls))
                     .font(.system(size: 10.5)).foregroundStyle(.secondary)
             }
             Spacer()
@@ -124,7 +124,7 @@ struct ProviderCard: View {
                     .font(.system(size: 18, weight: .semibold, design: .rounded))
                     .foregroundStyle(color)
                     .monospacedDigit()
-                Text("est. cost").font(.system(size: 10.5)).foregroundStyle(.secondary)
+                Text(L("est. cost")).font(.system(size: 10.5)).foregroundStyle(.secondary)
             }
             Sparkline(values: stats.daily, color: color)
                 .frame(width: 76, height: 28)
@@ -146,10 +146,10 @@ struct ProviderCard: View {
             .clipShape(Capsule())
             LazyVGrid(columns: [GridItem(.flexible(), alignment: .leading), GridItem(.flexible(), alignment: .leading)],
                       alignment: .leading, spacing: 4) {
-                legend("in", bd.input, color)
-                legend("out", bd.output, color.opacity(0.7))
-                legend("cache read", bd.cacheRead, .primary.opacity(0.22))
-                legend("cache write", bd.cacheWrite, .primary.opacity(0.4))
+                legend(L("in"), bd.input, color)
+                legend(L("out"), bd.output, color.opacity(0.7))
+                legend(L("cache read"), bd.cacheRead, .primary.opacity(0.22))
+                legend(L("cache write"), bd.cacheWrite, .primary.opacity(0.4))
             }
         }
     }
@@ -179,7 +179,7 @@ struct ProviderCard: View {
             let total = max(bd.total, 1)
             VStack(alignment: .leading, spacing: 5) {
                 Divider().opacity(0.3)
-                Text("SOURCES").font(.system(size: 9.5, weight: .bold)).foregroundStyle(.tertiary)
+                Text(L("SOURCES")).font(.system(size: 9.5, weight: .bold)).foregroundStyle(.tertiary)
                 // stacked bar
                 GeometryReader { geo in
                     HStack(spacing: 1.5) {
@@ -215,7 +215,7 @@ struct ProviderCard: View {
     private var modelList: some View {
         VStack(alignment: .leading, spacing: 6) {
             Divider().opacity(0.3)
-            Text("MODELS · LAST 30D").font(.system(size: 9.5, weight: .bold)).foregroundStyle(.tertiary)
+            Text(L("MODELS · LAST 30D")).font(.system(size: 9.5, weight: .bold)).foregroundStyle(.tertiary)
             let models = stats.byModel.sorted { $0.value.cost > $1.value.cost }.prefix(6)
             ForEach(Array(models), id: \.key) { model, b in
                 HStack {
