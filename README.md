@@ -22,7 +22,7 @@ Reads local logs only — no API keys, no network.
 | Codex CLI | `~/.codex/sessions/**/*.jsonl` (`token_count` → `last_token_usage`) |
 | Gemini CLI | `~/.gemini/tmp/*/chats/*.json` (`tokens` field) |
 
-Features: Today / 7d / 30d / All windows, input/output/cache breakdown, 14-day sparkline,
+Providers without local data are hidden. Features: Today / 7d / 30d / All windows, input/output/cache breakdown, 14-day sparkline,
 per-model cost (tap a card), launch-at-login, auto refresh every 60 s. Light / dark / system theme (⚙️ menu). UI in **English or Thai** — follows the system language (Thai → ไทย, anything else → English), overridable in ⚙️ → Language.
 Menu-bar item can show the combined total or a single provider (its logo + tokens + worst limit) — ⚙️ → "แสดงบน menubar".
 

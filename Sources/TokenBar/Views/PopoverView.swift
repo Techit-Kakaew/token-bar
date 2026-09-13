@@ -49,9 +49,21 @@ struct PopoverView: View {
         }
     }
 
+    /// Providers with local data on this Mac; the rest are hidden entirely.
+    private var visibleProviders: [Provider] { Provider.allCases.filter { store.stats[$0]?.available == true } }
+
     private var cards: some View {
         VStack(spacing: 8) {
-            ForEach(Provider.allCases) { p in
+            if visibleProviders.isEmpty {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(L("No local data found")).font(.system(size: 13, weight: .semibold))
+                    Text(L("nodata.hint")).font(.system(size: 11)).foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(12)
+                .glassCard()
+            }
+            ForEach(visibleProviders) { p in
                 if let s = store.stats[p] {
                     ProviderCard(stats: s, window: store.window, limits: store.limits[p])
                 }
@@ -138,7 +150,7 @@ struct PopoverView: View {
             Picker(L("Menu bar shows"), selection: Binding(get: { store.menuBarProvider?.rawValue ?? "all" },
                                                          set: { store.menuBarProvider = Provider(rawValue: $0) })) {
                 Text(L("All providers")).tag("all")
-                ForEach(Provider.allCases) { Text($0.displayName).tag($0.rawValue) }
+                ForEach(visibleProviders) { Text($0.displayName).tag($0.rawValue) }
             }
             Picker(L("Theme"), selection: Binding(get: { store.appearance }, set: { store.appearance = $0 })) {
                 ForEach(UsageStore.Appearance.allCases) { Text($0.label).tag($0) }

@@ -29,6 +29,8 @@ enum L10n {
         "Dashboard": ("Dashboard", "แดชบอร์ด"),
         "updated %@": ("updated %@", "อัปเดต %@"),
         "No local data found": ("No local data found", "ไม่พบข้อมูลในเครื่อง"),
+        "nodata.hint": ("TokenBar reads ~/.claude/projects, ~/.codex/sessions and ~/.gemini/tmp. Use Claude Code, Codex CLI or Gemini CLI once and it will appear here.",
+                        "TokenBar อ่านจาก ~/.claude/projects, ~/.codex/sessions และ ~/.gemini/tmp ใช้ Claude Code, Codex CLI หรือ Gemini CLI สักครั้งแล้วจะขึ้นที่นี่"),
         "limits: %@": ("limits: %@", "limit: %@"),
         "est. cost": ("est. cost", "ค่าใช้จ่ายประมาณ"),
         "tokens · %d calls": ("tokens · %d calls", "tokens · %d ครั้ง"),
