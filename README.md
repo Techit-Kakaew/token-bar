@@ -115,8 +115,8 @@ Built-in table in `Sources/TokenBar/Pricing.swift` (USD per 1M tokens). Override
 
 ## Vendor logos
 
-`Sources/TokenBar/Resources/logos/*.svg` — Claude and Gemini marks from [Simple Icons](https://simpleicons.org) (CC0);
-OpenAI blossom is a hand-drawn approximation (the official mark is not redistributable). Loaded as template
+`Sources/TokenBar/Resources/logos/*.svg` — Claude, Gemini and OpenAI marks as published by [Simple Icons](https://simpleicons.org) (CC0).
+Trademarks belong to their owners; used here only to identify the tool. Loaded as template
 NSImages and tinted with each provider's accent colour. Swap the SVG to change a logo.
 
 ## Custom menu-bar icon
