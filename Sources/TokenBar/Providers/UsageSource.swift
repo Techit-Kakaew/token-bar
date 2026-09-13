@@ -26,11 +26,27 @@ extension UsageSource {
     }
 }
 
-/// Per-file parse cache keyed by (path, mtime, size). Cheap incremental refresh.
+/// Per-file parse cache keyed by (path, mtime, size), persisted to ~/Library/Caches so app launch
+/// skips re-parsing unchanged logs (only files that changed since last run are read).
 final class FileCache {
-    struct Key: Hashable { let path: String; let mtime: Date; let size: Int }
-    private var store: [String: (Key, [UsageEvent])] = [:]
+    struct Key: Hashable, Codable { let path: String; let mtime: Date; let size: Int }
+    private struct Entry: Codable { let key: Key; let events: [UsageEvent] }
+    private var store: [String: Entry] = [:]
     private let lock = NSLock()
+    private var dirty = false
+
+    static let cacheURL: URL = {
+        let base = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first!
+            .appendingPathComponent(Bundle.main.bundleIdentifier ?? "dev.techit.tokenbar.app", isDirectory: true)
+        try? FileManager.default.createDirectory(at: base, withIntermediateDirectories: true)
+        return base.appendingPathComponent("parse-cache-v1.json")
+    }()
+
+    init(persistent: Bool = true) {
+        guard persistent, let data = try? Data(contentsOf: Self.cacheURL),
+              let loaded = try? JSONDecoder().decode([String: Entry].self, from: data) else { return }
+        store = loaded
+    }
 
     func events(for url: URL, parse: (URL) -> [UsageEvent]) -> [UsageEvent] {
         let attrs = try? FileManager.default.attributesOfItem(atPath: url.path)
@@ -38,11 +54,21 @@ final class FileCache {
                       mtime: attrs?[.modificationDate] as? Date ?? .distantPast,
                       size: attrs?[.size] as? Int ?? 0)
         lock.lock()
-        if let (k, ev) = store[url.path], k == key { lock.unlock(); return ev }
+        if let e = store[url.path], e.key == key { lock.unlock(); return e.events }
         lock.unlock()
         let ev = parse(url)
-        lock.lock(); store[url.path] = (key, ev); lock.unlock()
+        lock.lock(); store[url.path] = Entry(key: key, events: ev); dirty = true; lock.unlock()
         return ev
+    }
+
+    /// Write to disk if anything changed; drop entries whose files vanished.
+    func persist() {
+        lock.lock()
+        guard dirty else { lock.unlock(); return }
+        store = store.filter { FileManager.default.fileExists(atPath: $0.key) }
+        let snapshot = store; dirty = false
+        lock.unlock()
+        if let data = try? JSONEncoder().encode(snapshot) { try? data.write(to: Self.cacheURL, options: .atomic) }
     }
 }
 

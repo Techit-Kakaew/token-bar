@@ -1,0 +1,1 @@
+{"id":"m1","sessionID":"s1","role":"assistant","time":{"created":1756713600000,"completed":1756713605000},"modelID":"claude-sonnet-4-6","providerID":"anthropic","cost":0.01,"tokens":{"input":300,"output":60,"reasoning":15,"cache":{"read":1000,"write":50}}}

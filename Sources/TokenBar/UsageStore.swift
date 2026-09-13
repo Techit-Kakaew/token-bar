@@ -139,6 +139,7 @@ final class UsageStore: ObservableObject {
                 result[src.provider] = s
             }
             let final = result
+            cache.persist()
             let codexLimits = CodexLimits.read()
             let recentTs = recent
             let recentEv = recent30

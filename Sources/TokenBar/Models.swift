@@ -63,7 +63,7 @@ enum Provider: String, CaseIterable, Identifiable, Codable {
 }
 
 /// One API call worth of usage.
-struct UsageEvent {
+struct UsageEvent: Codable {
     let provider: Provider
     let timestamp: Date
     let model: String

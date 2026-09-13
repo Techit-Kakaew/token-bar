@@ -136,6 +136,15 @@ and `MenuBarIcon@2x.png` (36×36 px). macOS tints it for light/dark menu bars au
 - Or drop in your own PNGs with the same names, then `./build.sh --install`
 - Check which file is loaded: `/Applications/TokenBar.app/Contents/MacOS/TokenBar --icon`
 
+## Tests
+
+```bash
+swift test
+```
+
+Fixtures for every parser live in `Tests/TokenBarTests/Fixtures`. Parsed results are cached per file
+(path + mtime + size) in `~/Library/Caches/dev.techit.tokenbar.app/parse-cache-v1.json`; delete it to force a full re-parse.
+
 ## Debug
 
 ```bash

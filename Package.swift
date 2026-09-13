@@ -10,6 +10,12 @@ let package = Package(
             path: "Sources/TokenBar",
             resources: [.process("Resources")],
             swiftSettings: [.unsafeFlags(["-Onone"], .when(configuration: .debug))]
+        ),
+        .testTarget(
+            name: "TokenBarTests",
+            dependencies: ["TokenBar"],
+            path: "Tests/TokenBarTests",
+            exclude: ["Fixtures"]
         )
     ]
 )

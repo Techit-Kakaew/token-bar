@@ -40,7 +40,7 @@ final class UpdateChecker: ObservableObject {
         }
     }
 
-    static func isNewer(_ a: String, than b: String) -> Bool {
+    nonisolated static func isNewer(_ a: String, than b: String) -> Bool {
         let pa = a.split(separator: ".").map { Int($0) ?? 0 }, pb = b.split(separator: ".").map { Int($0) ?? 0 }
         for i in 0..<max(pa.count, pb.count) {
             let x = i < pa.count ? pa[i] : 0, y = i < pb.count ? pb[i] : 0

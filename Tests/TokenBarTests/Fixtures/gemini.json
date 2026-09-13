@@ -1,0 +1,4 @@
+{"sessionId":"g1","messages":[
+ {"type":"user","timestamp":"2026-09-01T08:00:00.000Z","content":"hi"},
+ {"type":"gemini","timestamp":"2026-09-01T08:00:03.000Z","model":"gemini-3-pro-preview","tokens":{"input":120,"output":40,"cached":20,"thoughts":10,"tool":5,"total":195}}
+]}
