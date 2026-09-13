@@ -36,6 +36,7 @@ struct DashboardView: View {
             if isSnapshot { content } else { ScrollView { content } }
         }
         .frame(minWidth: 860, minHeight: 560)
+        .id(store.language)
         .environment(\.locale, L10n.current.locale)
         .background {
             if isSnapshot { Color.clear } else {

@@ -25,6 +25,7 @@ struct PopoverView: View {
             footer
         }
         .frame(width: 380)
+        .id(store.language)   // force full re-render (incl. cards) when the language changes
         .environment(\.locale, L10n.current.locale)
         .background { if !isSnapshot { WindowGlassTuner(material: .hudWindow) } }
     }
