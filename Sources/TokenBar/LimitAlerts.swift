@@ -53,7 +53,7 @@ final class LimitAlerts: ObservableObject {
         var thresholds: [Int] = [Self.criticalPercent]
         if warnPercent > 0 { thresholds.append(warnPercent) }
         for t in thresholds.sorted(by: >) where Int(l.percent) >= t {
-            let key = "\(p.rawValue)|\(l.name)|\(t)|\(cycle)"
+            let key = "\(p.rawValue)|\(l.key)|\(t)|\(cycle)"
             if fired.contains(key) { continue }
             fired.insert(key)
             // Only the highest crossed threshold notifies (avoid 80% + 95% back-to-back).
@@ -74,7 +74,7 @@ final class LimitAlerts: ObservableObject {
             : L("limit.body %d %@", Int(l.percent), l.resetText)
         c.sound = threshold >= Self.criticalPercent ? .defaultCritical : .default
         UNUserNotificationCenter.current().add(
-            UNNotificationRequest(identifier: "tokenbar.limit.\(p.rawValue).\(l.name)", content: c, trigger: nil))
+            UNNotificationRequest(identifier: "tokenbar.limit.\(p.rawValue).\(l.key)", content: c, trigger: nil))
     }
 }
 

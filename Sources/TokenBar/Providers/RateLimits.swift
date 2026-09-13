@@ -2,10 +2,15 @@ import Foundation
 
 /// One rate-limit window (e.g. 5-hour session, weekly).
 struct RateLimit: Identifiable {
-    let name: String        // "5h", "Weekly", "Weekly · Fable"
+    /// Stable key: "5h", "Weekly", or "Weekly · <model>". Localized at render time via `name`.
+    let key: String
+    var name: String {
+        if key.hasPrefix("Weekly · ") { return L("Weekly · %@", String(key.dropFirst("Weekly · ".count))) }
+        return L(key)
+    }
     let percent: Double     // 0-100 used
     let resetsAt: Date?
-    var id: String { name }
+    var id: String { key }
 
     /// "2h 36m · 15:00" (same day), "9h 10m · tmr 02:00", or "Thu 02:00" for far-off resets.
     var resetText: String {
@@ -63,12 +68,12 @@ enum CodexLimits {
                 let name: String
                 switch mins {
                 case 0..<120: name = "\(mins)m"
-                case 120..<1440: name = mins == 300 ? L("5h") : "\(mins / 60)h"
-                case 10080: name = L("Weekly")
+                case 120..<1440: name = "\(mins / 60)h"
+                case 10080: name = "Weekly"
                 default: name = "\(mins / 1440)d"
                 }
                 let reset = (w["resets_at"] as? NSNumber).map { Date(timeIntervalSince1970: $0.doubleValue) }
-                out.limits.append(RateLimit(name: name, percent: (w["used_percent"] as? NSNumber)?.doubleValue ?? 0, resetsAt: reset))
+                out.limits.append(RateLimit(key: name, percent: (w["used_percent"] as? NSNumber)?.doubleValue ?? 0, resetsAt: reset))
             }
             break
         }
@@ -130,15 +135,15 @@ enum ClaudeLimits {
             }
             func lim(_ key: String, _ name: String) -> RateLimit? {
                 guard let w = j[key] as? [String: Any], let u = w["utilization"] as? NSNumber else { return nil }
-                return RateLimit(name: name, percent: u.doubleValue, resetsAt: parseDate(w["resets_at"] as? String))
+                return RateLimit(key: name, percent: u.doubleValue, resetsAt: parseDate(w["resets_at"] as? String))
             }
-            if let l = lim("five_hour", L("5h")) { out.limits.append(l) }
-            if let l = lim("seven_day", L("Weekly")) { out.limits.append(l) }
+            if let l = lim("five_hour", "5h") { out.limits.append(l) }
+            if let l = lim("seven_day", "Weekly") { out.limits.append(l) }
             // Model-scoped weekly limits (e.g. Opus / Fable) from the `limits` array.
             for item in (j["limits"] as? [[String: Any]]) ?? [] where (item["kind"] as? String) == "weekly_scoped" {
                 let model = ((item["scope"] as? [String: Any])?["model"] as? [String: Any])?["display_name"] as? String
                 guard let pct = item["percent"] as? NSNumber else { continue }
-                out.limits.append(RateLimit(name: L("Weekly · %@", model ?? "scoped"), percent: pct.doubleValue,
+                out.limits.append(RateLimit(key: "Weekly · \(model ?? "scoped")", percent: pct.doubleValue,
                                             resetsAt: parseDate(item["resets_at"] as? String)))
             }
             out.fetchedAt = Date()
