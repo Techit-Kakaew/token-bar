@@ -17,13 +17,9 @@ struct TokenBarApp: App {
                 } else {
                     Image(nsImage: MenuBarIconTint.image(provider: focus, severity: 0)).renderingMode(.template)
                 }
-                if let st = store.breaks.streak {
-                    let lvl = st.duration / 60 / Double(max(store.breaks.thresholdMinutes, 1))
-                    if lvl >= 0.5 {
-                        Image(systemName: lvl >= 1 ? "flame.fill" : "flame")
-                            .font(.system(size: 10, weight: .bold))
-                            .foregroundStyle(lvl >= 1 ? Color(red: 1.0, green: 0.35, blue: 0.25) : Color(red: 1.0, green: 0.6, blue: 0.2))
-                    }
+                if store.flameStage >= 2 {
+                    Image(nsImage: FlameSprite.frames(stage: store.flameStage)[store.flameFrame % FlameSprite.frameCount])
+                        .renderingMode(.original)
                 }
                 if store.showNumberInBar {
                     Text(store.menuBarTokens.compact)

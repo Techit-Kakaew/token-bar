@@ -28,6 +28,23 @@ if let i = CommandLine.arguments.firstIndex(of: "--export"), i + 1 < CommandLine
     RunLoop.main.run()
 }
 
+if let i = CommandLine.arguments.firstIndex(of: "--flame-preview"), i + 1 < CommandLine.arguments.count {
+    let out = URL(fileURLWithPath: CommandLine.arguments[i + 1])
+    let scale: CGFloat = 4, cell: CGFloat = 20 * scale
+    let stages = [2, 3, 4]
+    let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: Int(cell) * FlameSprite.frameCount, pixelsHigh: Int(cell) * stages.count,
+                               bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0)!
+    NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
+    NSColor(white: 0.12, alpha: 1).setFill(); NSRect(x: 0, y: 0, width: rep.pixelsWide, height: rep.pixelsHigh).fill()
+    for (row, st) in stages.enumerated() {
+        for (f, img) in FlameSprite.frames(stage: st).enumerated() {
+            img.draw(in: NSRect(x: CGFloat(f) * cell + 2 * scale, y: CGFloat(row) * cell + scale, width: 16 * scale, height: 18 * scale))
+        }
+    }
+    try? rep.representation(using: .png, properties: [:])!.write(to: out)
+    print("wrote \(out.path)"); exit(0)
+}
+
 if CommandLine.arguments.contains("--notify-test") {
     // Must run from the installed .app bundle: /Applications/TokenBar.app/Contents/MacOS/TokenBar --notify-test
     Task { @MainActor in

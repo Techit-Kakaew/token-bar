@@ -15,6 +15,28 @@ final class UsageStore: ObservableObject {
     let updates = UpdateChecker()
     let budget = Budget()
     let hotkeys = HotKeys()
+
+    // Menu-bar flame animation: runs only while the streak is ≥ 50% of the break threshold.
+    @Published var flameFrame = 0
+    private var flameTimer: Timer?
+    var streakLevel: Double {
+        guard let s = breaks.streak else { return 0 }
+        return s.duration / 60 / Double(max(breaks.thresholdMinutes, 1))
+    }
+    var flameStage: Int { let l = streakLevel; return l >= 1 ? 4 : l >= 0.75 ? 3 : l >= 0.5 ? 2 : 0 }
+    func updateFlameTimer() {
+        let want = flameStage >= 2
+        if want, flameTimer == nil {
+            flameTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 8, repeats: true) { [weak self] _ in
+                Task { @MainActor in
+                    guard let self else { return }
+                    self.flameFrame = (self.flameFrame + 1) % FlameSprite.frameCount
+                }
+            }
+        } else if !want, let t = flameTimer {
+            t.invalidate(); flameTimer = nil; flameFrame = 0
+        }
+    }
     @Published var hotkeyPopover: String = UserDefaults.standard.string(forKey: "hotkey.popover") ?? "⌥⇧T" {
         didSet { UserDefaults.standard.set(hotkeyPopover, forKey: "hotkey.popover"); bindHotkeys() }
     }
@@ -167,6 +189,7 @@ final class UsageStore: ObservableObject {
                 self.stats = final
                 self.recentEvents = recentEv
                 self.breaks.update(with: recentTs)
+                self.updateFlameTimer()
                 self.budget.update(todaySpend: self.todaySpend, weekSpend: self.weekSpend)
                 self.limits[.codex] = codexLimits
                 self.alerts.update(self.limits)
