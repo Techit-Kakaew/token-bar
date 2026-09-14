@@ -5,46 +5,78 @@
 <h1 align="center">TokenBar</h1>
 
 <p align="center">
-  <a href="https://github.com/Techit-Kakaew/token-bar/actions/workflows/ci.yml"><img src="https://github.com/Techit-Kakaew/token-bar/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  Token usage, estimated cost and rate limits for your AI coding tools — in the macOS menu bar.<br>
+  Reads local logs only. No API keys, no accounts, no telemetry.
+</p>
+
+<p align="center">
   <a href="https://github.com/Techit-Kakaew/token-bar/releases/latest"><img src="https://img.shields.io/github/v/release/Techit-Kakaew/token-bar" alt="Release"></a>
+  <a href="https://github.com/Techit-Kakaew/token-bar/actions/workflows/ci.yml"><img src="https://github.com/Techit-Kakaew/token-bar/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <img src="https://img.shields.io/badge/macOS-14%2B-black" alt="macOS 14+">
+  <img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT">
 </p>
 
 <p align="center">
   <img src="docs/popover.png" width="380" alt="TokenBar popover">
 </p>
 
-macOS menu-bar app that shows AI token usage & estimated cost across local AI coding CLIs.
-Reads local logs only — no API keys, no network.
+## Features
 
-| Provider | Source | Status |
+- **Usage at a glance** — tokens and list-price cost for Today / 7d / 30d / All, split into input, output, cache read and cache write, with a 14-day sparkline per tool.
+- **Rate limits** — Claude 5-hour and weekly windows (incl. per-model weekly), Codex 5-hour and weekly, with reset countdown and clock time.
+- **Where it came from** — usage attributed to source (Terminal, Claude Desktop, Zed, VS Code, …) and to project folder.
+- **Dashboard window** — 30-day stacked chart, top projects / models / sources; click a bar to drill into one day.
+- **Alerts** — limit thresholds (80 % / 95 %), daily and weekly spend budgets, and a break reminder after long continuous use.
+- **Menu bar, your way** — combined total or a single tool (its logo + tokens + worst limit); amber / red when a limit is close.
+- **Export** — events CSV, daily CSV, Markdown report; also headless from the CLI.
+- **Native** — Liquid Glass on macOS 26, light / dark / system, English or Thai, global hotkeys, launch at login.
+
+## Install
+
+Download the latest `.dmg` from **[Releases](https://github.com/Techit-Kakaew/token-bar/releases/latest)** and drag
+TokenBar.app to Applications. Universal binary (Apple Silicon + Intel), macOS 14 or newer.
+
+The app is **not notarized** yet (no Apple Developer account), so on first launch macOS may say it is damaged or from an
+unidentified developer. Clear the quarantine flag once and open it normally:
+
+```bash
+xattr -cr /Applications/TokenBar.app
+```
+
+On first launch TokenBar explains what it reads and asks before requesting anything:
+
+- **Claude limits** (optional) — reads Claude Code's login token from your Keychain to fetch 5h / weekly limits. macOS prompts once; choose *Always Allow*.
+- **Notifications** (optional) — for limit, budget and break alerts.
+
+Both can be changed later in the ⚙️ menu.
+
+## Supported tools
+
+| Tool | Reads | Status |
 |---|---|---|
-| Claude Code | `~/.claude/projects/**/*.jsonl` (`message.usage`, deduped by message id) | verified |
-| Codex CLI | `~/.codex/sessions/**/*.jsonl` (`token_count` → `last_token_usage`) | verified |
-| Gemini CLI | `~/.gemini/tmp/*/chats/*.json` (`tokens` field) | format from Gemini CLI source; not exercised locally |
-| Zed Agent (native panel) | `~/Library/Application Support/Zed/threads/threads.db` — zstd JSON, `request_token_usage` (needs `brew install zstd`) | verified; no per-message timestamps → attributed to thread `updated_at` |
-| OpenCode | `~/.local/share/opencode/storage/message/*/*.json` (`tokens`, `modelID`) | **unverified** — written from the documented JSON layout; please open an issue with a sample if it misparses |
-| Qwen Code | `~/.qwen/tmp/*/chats/*.json` (Gemini CLI fork, same layout) | unverified |
+| **Claude Code** — CLI, Claude Desktop, Zed (ACP), VS Code, Agent SDK | `~/.claude/projects/**/*.jsonl` | verified |
+| **Codex CLI** — CLI, Codex Desktop, VS Code | `~/.codex/sessions/**/*.jsonl` | verified |
+| **Zed Agent** (Zed's native panel) | `~/Library/Application Support/Zed/threads/threads.db` (needs `brew install zstd`) | verified — no per-message timestamps, usage is dated by thread `updated_at` |
+| **Gemini CLI** | `~/.gemini/tmp/*/chats/*.json` | from Gemini CLI source, not exercised locally |
+| **Qwen Code** | `~/.qwen/tmp/*/chats/*.json` | Gemini CLI fork, unverified |
+| **OpenCode** | `~/.local/share/opencode/storage/message/*/*.json` | unverified — [open an issue](https://github.com/Techit-Kakaew/token-bar/issues) with a sample if it misparses |
 
-Providers with no local files are hidden automatically. Adding one = implement `UsageSource` (roots, matches, parse) + a `Provider` case.
+Tools with no local data are hidden. Cursor, Windsurf, Copilot and the web chats keep no readable local usage and cannot be supported.
+Adding a tool means implementing `UsageSource` (roots, matches, parse) and a `Provider` case.
 
-Providers without local data are hidden. Features: Today / 7d / 30d / All windows, input/output/cache breakdown, 14-day sparkline,
-per-model cost (tap a card), launch-at-login, auto refresh every 60 s. Light / dark / system theme (⚙️ menu). UI in **English or Thai** — follows the system language (Thai → ไทย, anything else → English), overridable in ⚙️ → Language.
-Menu-bar item can show the combined total or a single provider (its logo + tokens + worst limit) — ⚙️ → "แสดงบน menubar".
+Rate limits come from `api.anthropic.com/api/oauth/usage` (Claude, polled every 5 min; if the token expires, run `claude` once)
+and from the `rate_limits` payload in Codex session logs (updates while Codex runs).
 
-## Dashboard window
+## Dashboard
 
 <img src="docs/dashboard.png" width="900" alt="TokenBar dashboard">
 
-"Dashboard" button in the popover footer opens a separate resizable window: 7/14/30-day stacked
-daily chart (tokens or cost), top **projects** (from `cwd` in logs), models, sources, and per-provider
-breakdown with rate-limit gauges. **Click a bar** to drill into that day — projects / models / sources
-switch to day-scoped data; click again or "Back" to return.
-Debug render: `TokenBar --snapshot-dashboard out.png` (`TOKENBAR_SNAPSHOT_DAY=1` preselects yesterday).
+Opens from the popover footer (or a hotkey). 7 / 14 / 30-day stacked daily chart in tokens or cost, top **projects**
+(from the working directory in the logs), **models** and **sources**, plus per-tool breakdown with limit gauges.
+Click a bar to scope everything to that day; click again or *Back* to return.
 
-## Export
-
-Dashboard → **Export** menu: events CSV (last 30 days, or the drilled-down day), daily summary CSV,
-or a Markdown report for the selected window. Headless for scripts / cron:
+**Export** (dashboard header) writes events CSV for the last 30 days or the selected day, a daily summary CSV, or a
+Markdown report for the selected window. The same outputs are available headless:
 
 ```bash
 /Applications/TokenBar.app/Contents/MacOS/TokenBar --export events 7d  > events.csv
@@ -52,111 +84,57 @@ or a Markdown report for the selected window. Headless for scripts / cron:
 /Applications/TokenBar.app/Contents/MacOS/TokenBar --export report 30d > report.md
 ```
 
+## Alerts, budgets, hotkeys
+
+All in the ⚙️ menu:
+
+| Setting | Behaviour |
+|---|---|
+| Limit alert | Notification when any 5h / weekly window crosses 80 % (choose off / 70 / 80 / 90) and again at 95 %, once per reset cycle. Menu-bar icon turns amber / red and shows the worst percentage. |
+| Daily / weekly budget | Progress row under the totals; notification at 80 % and 100 %, once per period. Amounts are list-price estimates. |
+| Break reminder | Continuous use (calls less than 15 min apart) for 90 min → "take a break" notification, repeating every 45 min. All three values adjustable. |
+| Hotkeys | Toggle the popover (default `⌥⇧T`) and open the dashboard. Carbon hotkeys, no Accessibility permission. |
+| Menu bar shows | Combined total, or one tool with its logo and limit. Toggle the number on / off. |
+| Theme / Language | System / light / dark; system / English / ไทย. |
+
 ## Privacy
 
-- Reads **local log files only**; nothing is uploaded, no telemetry, no analytics.
-- The single network call is optional: with *Claude limits* enabled, TokenBar reads Claude Code's OAuth token from your
-  Keychain (macOS asks once) and calls `api.anthropic.com/api/oauth/usage` to show 5h / weekly limits.
-  Turn it off in ⚙️ at any time. A once-a-day check against the GitHub Releases API looks for new versions (no identifiers sent).
-- Settings live in `UserDefaults` (`dev.techit.tokenbar.app`); nothing else is written outside the app.
+- Reads local log files only. Nothing is uploaded; no telemetry, no analytics, no identifiers.
+- Network calls: the optional Claude limits request above, and a once-a-day check of the GitHub Releases API for new versions. Both can be disabled.
+- Settings are stored in `UserDefaults` (`dev.techit.tokenbar.app`); parsed results are cached in `~/Library/Caches/dev.techit.tokenbar.app/`.
 
-## Sources
+## Cost estimates
 
-Each card splits usage by where the call came from:
-
-- **Claude Code** — `entrypoint` field: `cli` → Terminal, `claude-desktop` → Claude Desktop, `sdk-*` → Zed (ACP) / Agent SDK, `claude-vscode` → VS Code.
-- **Codex** — `session_meta.originator` / `source`: Codex CLI, Codex Desktop, VS Code.
-
-## Rate limits (5h / weekly)
-
-| Provider | Source |
-|---|---|
-| Claude Code | `GET api.anthropic.com/api/oauth/usage` using the OAuth token Claude Code stores in Keychain (`Claude Code-credentials`). Polled every 5 min. **First run shows a Keychain prompt → click "Always Allow"**. If the token expires, run `claude` once to refresh it. |
-| Codex CLI | `rate_limits` payload in the newest session log (updates while Codex runs). |
-
-Gauges turn amber ≥70 %, red ≥90 %.
-
-## Hotkeys & budgets
-
-- Global hotkeys (⚙️): toggle the popover (default `⌥⇧T`) and open the dashboard (off by default). Carbon hotkeys — no Accessibility permission needed.
-- Daily / weekly spend budgets (⚙️): progress bar under the totals, notification at 80 % and 100 % once per day / week. Amounts are list-price estimates.
-
-## Limit alerts
-
-Notification when any 5h / weekly window crosses 80 % (configurable: off / 70 / 80 / 90) and again at 95 %,
-once per reset cycle. The menu-bar icon turns amber / red and shows the worst percentage while over threshold.
-
-## Break reminder
-
-Detects a continuous usage streak (calls across all providers with gaps < 15 min) and posts a macOS
-notification suggesting a break after 90 min, repeating every 45 min while the streak continues.
-Thresholds live in the ⚙️ menu in the popover footer. First launch asks for Notification permission.
-
-## Install
-
-**Download**: latest `.dmg` from [Releases](https://github.com/Techit-Kakaew/token-bar/releases/latest)
-(all versions on [Releases](https://github.com/Techit-Kakaew/token-bar/releases)),
-drag TokenBar.app to Applications. The build is universal (Apple Silicon + Intel) but **not notarized**
-(no Apple Developer account yet), so on first launch macOS may refuse it. Fix once:
-
-```bash
-xattr -cr /Applications/TokenBar.app
-```
-
-then open normally (or right-click → Open).
-
-**Build from source** (Xcode 15+, macOS 14+):
-
-```bash
-./build.sh --install     # native build → /Applications/TokenBar.app
-./build.sh --dmg         # universal build → dist/TokenBar-<version>.dmg
-```
-
-**Release**: bump `CFBundleShortVersionString` in `Info.plist`, commit, then `git tag vX.Y.Z && git push origin vX.Y.Z`.
-GitHub Actions builds the universal dmg and publishes the release automatically (`.github/workflows/release.yml`).
-
-App icon: PNGs in `Assets/AppIcon.xcassets` (regenerate with `scripts/make_appicon.swift`); `build.sh` compiles them with `actool` into `Assets.car` + `AppIcon.icns`.
-
-## Pricing overrides
-
-Built-in table in `Sources/TokenBar/Pricing.swift` (USD per 1M tokens). Override or add models via
-`~/.config/tokenbar/pricing.json`, matched by model-id prefix:
+Costs are **what the same tokens would cost at list price** (USD per 1M tokens, per model, with cache read / write rates),
+not what you were billed — useful for judging a subscription or comparing tools. The built-in table lives in
+`Sources/TokenBar/Pricing.swift`; override or add models in `~/.config/tokenbar/pricing.json`, matched by model-id prefix:
 
 ```json
 { "gpt-5.6": { "input": 1.75, "output": 14, "cacheRead": 0.175, "cacheWrite": 0 } }
 ```
 
-## Vendor logos
+## Development
 
-`Sources/TokenBar/Resources/logos/*.svg` — Claude, Gemini and OpenAI marks as published by [Simple Icons](https://simpleicons.org) (CC0).
-Trademarks belong to their owners; used here only to identify the tool. Loaded as template
-NSImages and tinted with each provider's accent colour. Swap the SVG to change a logo.
-
-## Custom menu-bar icon
-
-Icon is a **template image** (black + alpha, 18×18 pt) at `Sources/TokenBar/Resources/MenuBarIcon.png`
-and `MenuBarIcon@2x.png` (36×36 px). macOS tints it for light/dark menu bars automatically.
-
-- Regenerate the built-in hexagon-bars icon: `swift scripts/make_icon.swift Sources/TokenBar/Resources`
-- Or drop in your own PNGs with the same names, then `./build.sh --install`
-- Check which file is loaded: `/Applications/TokenBar.app/Contents/MacOS/TokenBar --icon`
-
-## Tests
+Swift Package, SwiftUI `MenuBarExtra`, no Xcode project. Requires Xcode 16+ (Xcode 26 for the Liquid Glass path).
 
 ```bash
-swift test
+./build.sh --install     # native build → /Applications/TokenBar.app
+./build.sh --dmg         # universal build → dist/TokenBar-<version>.dmg
+swift test               # parser fixtures, pricing, streaks, export, versions
 ```
 
-Fixtures for every parser live in `Tests/TokenBarTests/Fixtures`. Parsed results are cached per file
-(path + mtime + size) in `~/Library/Caches/dev.techit.tokenbar.app/parse-cache-v1.json`; delete it to force a full re-parse.
+Useful flags on the built binary: `--dump` (aggregated stats), `--streak`, `--notify-test`, `--icon`,
+`--snapshot out.png` / `--snapshot-dashboard out.png` (render views to PNG; env `TOKENBAR_SNAPSHOT_LANG=th`,
+`TOKENBAR_SNAPSHOT_SCHEME=light`, `TOKENBAR_SNAPSHOT_DAY=1`).
 
-## Debug
+**Release**: bump `CFBundleShortVersionString` / `CFBundleVersion` in `Info.plist`, commit, then
+`git tag vX.Y.Z && git push origin vX.Y.Z`. GitHub Actions builds the universal dmg and publishes the release.
 
-```bash
-.build/release/TokenBar --dump               # print aggregated stats
-.build/release/TokenBar --snapshot out.png   # render popover to PNG
-```
+**Icons**: app icon from `Assets/AppIcon.xcassets` (regenerate with `scripts/make_appicon.swift`, compiled by `actool`
+in `build.sh`); menu-bar template icon from `scripts/make_icon.swift`; vendor logos in `Sources/TokenBar/Resources/logos/`
+(Claude, Gemini, OpenAI marks as published by [Simple Icons](https://simpleicons.org), CC0 — trademarks belong to their owners).
 
-## License
+## Credits & license
 
-MIT
+Made by [Techit Kakaew](https://github.com/Techit-Kakaew). Built with Claude Code.
+Released under the [MIT License](LICENSE).
