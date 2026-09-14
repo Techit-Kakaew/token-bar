@@ -75,8 +75,49 @@ struct UsageEvent: Codable {
     var source: String = "Unknown"
     /// Project folder name (last path component of cwd), if known.
     var project: String = "—"
+    /// Conversation / session id (file name or embedded id).
+    var sessionId: String = ""
+    /// Tokens sent as context in this call (prompt incl. cache); 0 if unknown.
+    var contextTokens: Int = 0
+    /// Model context window reported by the tool (Codex), else 0 → look up by model.
+    var contextWindow: Int = 0
 
     var total: Int { input + output + cacheRead + cacheWrite }
+}
+
+/// Context-window sizes (tokens) by model-id prefix; longest prefix wins. Override via pricing.json "contextWindow".
+enum ContextWindows {
+    static let table: [String: Int] = [
+        "claude-opus-5": 1_000_000, "claude-fable": 1_000_000, "claude-mythos": 1_000_000,
+        "claude-opus-4-8": 1_000_000, "claude-opus-4-7": 1_000_000, "claude-opus-4-6": 1_000_000,
+        "claude-sonnet-5": 1_000_000, "claude-sonnet-4-6": 1_000_000, "claude-sonnet-4": 200_000,
+        "claude-opus-4": 200_000, "claude-haiku": 200_000,
+        "gpt-6": 400_000, "gpt-5": 400_000, "codex": 400_000,
+        "gemini": 1_000_000, "qwen": 256_000,
+    ]
+    static func window(for model: String) -> Int {
+        let m = model.lowercased()
+        return table.keys.filter { m.hasPrefix($0) }.max { $0.count < $1.count }.flatMap { table[$0] } ?? 200_000
+    }
+}
+
+/// A conversation that has had activity recently.
+struct LiveSession: Identifiable {
+    enum State { case active, idle }
+    let id: String
+    let provider: Provider
+    let project: String
+    let source: String
+    let model: String
+    let started: Date
+    let last: Date
+    let calls: Int
+    let cost: Double
+    let tokens: Int
+    let contextTokens: Int
+    let contextWindow: Int
+    var contextRatio: Double { contextWindow > 0 ? Double(contextTokens) / Double(contextWindow) : 0 }
+    var state: State { Date().timeIntervalSince(last) < 180 ? .active : .idle }
 }
 
 struct TokenBreakdown {

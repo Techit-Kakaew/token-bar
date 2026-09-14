@@ -18,6 +18,8 @@ struct CodexSource: UsageSource {
         var model = "unknown"
         var source = "Codex CLI"
         var project = "—"
+        var sessionId = file.deletingPathExtension().lastPathComponent
+        var window = 0
         // Both turn_context and token_count lines contain "model" or "token_count"; scan lines with either.
         forEachLine(of: file, containing: "\"type\":\"") { obj in
             guard let type = obj["type"] as? String,
@@ -29,6 +31,7 @@ struct CodexSource: UsageSource {
             }
             if type == "session_meta" {
                 if let m = payload["model"] as? String { model = m }
+                if let id = payload["id"] as? String ?? payload["session_id"] as? String { sessionId = id }
                 if let c = payload["cwd"] as? String { project = projectName(c) }
                 let originator = (payload["originator"] as? String ?? "").lowercased()
                 let src = (payload["source"] as? String ?? "").lowercased()
@@ -43,6 +46,7 @@ struct CodexSource: UsageSource {
                   let info = payload["info"] as? [String: Any],
                   let last = info["last_token_usage"] as? [String: Any],
                   let ts = parseDate(obj["timestamp"] as? String) else { return }
+            if let w = info["model_context_window"] as? NSNumber { window = w.intValue }
             let input = int(last["input_tokens"])
             let cached = int(last["cached_input_tokens"])
             let out = int(last["output_tokens"])
@@ -52,7 +56,8 @@ struct CodexSource: UsageSource {
                 provider: .codex, timestamp: ts, model: model,
                 input: max(0, input - cached), output: out,
                 cacheRead: cached, cacheWrite: int(last["cache_write_input_tokens"]),
-                source: source, project: project))
+                source: source, project: project, sessionId: sessionId,
+                contextTokens: input, contextWindow: window))
         }
         return events
     }

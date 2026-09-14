@@ -91,6 +91,14 @@ enum L10n {
         "update.error": ("Could not check for updates", "ตรวจสอบอัปเดตไม่ได้"),
         "update.badge %@": ("v%@ available", "มี v%@"),
         "Download": ("Download", "ดาวน์โหลด"), "Later": ("Later", "ไว้ก่อน"),
+        // live sessions
+        "LIVE SESSIONS": ("LIVE SESSIONS", "SESSION ที่กำลังทำงาน"),
+        "active": ("active", "ทำงานอยู่"), "idle": ("idle", "พักอยู่"),
+        "context": ("context", "context"),
+        "%d calls · %@ · %@": ("%d calls · %@ · %@", "%d ครั้ง · %@ · %@"),
+        "ctx.title %@ %d": ("%@: context %d%% full", "%@: context เต็ม %d%%"),
+        "ctx.body %@ %@ %@": ("%@ session is using %@ of %@ — consider /compact or a fresh session.",
+                              "session %@ ใช้ context %@ จาก %@ แล้ว — ลอง /compact หรือเริ่ม session ใหม่"),
         // hotkeys / budget
         "Hotkey: popover": ("Hotkey · toggle popover", "คีย์ลัด · เปิด/ปิด popover"),
         "Hotkey: dashboard": ("Hotkey · dashboard", "คีย์ลัด · แดชบอร์ด"),

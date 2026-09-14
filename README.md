@@ -25,6 +25,7 @@
 - **Usage at a glance** — tokens and list-price cost for Today / 7d / 30d / All, split into input, output, cache read and cache write, with a 14-day sparkline per tool.
 - **Rate limits** — Claude 5-hour and weekly windows (incl. per-model weekly), Codex 5-hour and weekly, with reset countdown and clock time.
 - **Where it came from** — usage attributed to source (Terminal, Claude Desktop, Zed, VS Code, …) and to project folder.
+- **Live sessions** — conversations active in the last 15 minutes with project, source, model, calls, cost, duration and a **context-window gauge** (how full the model's context is); notification at 80 % so you can `/compact` before it auto-compacts.
 - **Dashboard window** — 30-day stacked chart, top projects / models / sources; click a bar to drill into one day.
 - **Alerts** — limit thresholds (80 % / 95 %), daily and weekly spend budgets, and a break reminder after long continuous use.
 - **Menu bar, your way** — combined total or a single tool (its logo + tokens + worst limit); amber / red when a limit is close.
@@ -93,6 +94,7 @@ All in the ⚙️ menu:
 
 | Setting | Behaviour |
 |---|---|
+| Context alert | Notification once per session when a live session's context passes 80 % of the model's window (window sizes in `ContextWindows`, Codex reports its own). |
 | Limit alert | Notification when any 5h / weekly window crosses 80 % (choose off / 70 / 80 / 90) and again at 95 %, once per reset cycle. Menu-bar icon turns amber / red and shows the worst percentage. |
 | Daily / weekly budget | Progress row under the totals; notification at 80 % and 100 %, once per period. Amounts are list-price estimates. |
 | Break reminder | Continuous use (calls less than 15 min apart) for 90 min → "take a break" notification, repeating every 45 min. All three values adjustable. |

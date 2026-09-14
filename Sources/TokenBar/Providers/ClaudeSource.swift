@@ -42,14 +42,14 @@ struct ClaudeSource: UsageSource {
             if !msgId.isEmpty, !seen.insert(key).inserted { return }
             let model = msg["model"] as? String ?? "unknown"
             if model == "<synthetic>" { return }
+            let input = int(usage["input_tokens"]), cr = int(usage["cache_read_input_tokens"]), cw = int(usage["cache_creation_input_tokens"])
             events.append(UsageEvent(
                 provider: .claude, timestamp: ts, model: model,
-                input: int(usage["input_tokens"]),
-                output: int(usage["output_tokens"]),
-                cacheRead: int(usage["cache_read_input_tokens"]),
-                cacheWrite: int(usage["cache_creation_input_tokens"]),
+                input: input, output: int(usage["output_tokens"]), cacheRead: cr, cacheWrite: cw,
                 source: Self.sourceName(obj["entrypoint"] as? String),
-                project: projectName(obj["cwd"] as? String)))
+                project: projectName(obj["cwd"] as? String),
+                sessionId: obj["sessionId"] as? String ?? file.deletingPathExtension().lastPathComponent,
+                contextTokens: input + cr + cw))
         }
         return events
     }

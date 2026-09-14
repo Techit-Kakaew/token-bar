@@ -82,3 +82,30 @@ final class ParserTests: XCTestCase {
         XCTAssertEqual(1_200_000_000.compact, "1.20B"); XCTAssertEqual(0.0.usd, "$0"); XCTAssertEqual(123.4.usd, "$123")
     }
 }
+
+final class LiveSessionTests: XCTestCase {
+    private func ev(_ minutesAgo: Double, session: String, ctx: Int, now: Date) -> UsageEvent {
+        UsageEvent(provider: .claude, timestamp: now.addingTimeInterval(-minutesAgo * 60), model: "claude-opus-5",
+                   input: 10, output: 5, cacheRead: ctx - 10, cacheWrite: 0, source: "Terminal (CLI)", project: "p",
+                   sessionId: session, contextTokens: ctx)
+    }
+
+    func testGroupsBySessionAndDropsStale() {
+        let now = Date()
+        let events = [ev(30, session: "a", ctx: 100_000, now: now), ev(2, session: "a", ctx: 500_000, now: now),
+                      ev(10, session: "b", ctx: 50_000, now: now), ev(40, session: "c", ctx: 900_000, now: now)]
+        let live = UsageStore.buildLiveSessions(events, now: now)
+        XCTAssertEqual(live.map(\.id), ["claude|a", "claude|b"], "c is older than 15 min; sorted by last activity")
+        let a = live[0]
+        XCTAssertEqual(a.calls, 2); XCTAssertEqual(a.contextTokens, 500_000, "latest call defines context")
+        XCTAssertEqual(a.contextWindow, 1_000_000); XCTAssertEqual(a.contextRatio, 0.5, accuracy: 0.001)
+        XCTAssertEqual(a.state, .active); XCTAssertEqual(live[1].state, .idle)
+    }
+
+    func testContextWindowLookup() {
+        XCTAssertEqual(ContextWindows.window(for: "claude-opus-5"), 1_000_000)
+        XCTAssertEqual(ContextWindows.window(for: "claude-haiku-4-5"), 200_000)
+        XCTAssertEqual(ContextWindows.window(for: "gpt-5.6-terra"), 400_000)
+        XCTAssertEqual(ContextWindows.window(for: "mystery"), 200_000)
+    }
+}

@@ -39,7 +39,7 @@ final class FileCache {
         let base = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first!
             .appendingPathComponent(Bundle.main.bundleIdentifier ?? "dev.techit.tokenbar.app", isDirectory: true)
         try? FileManager.default.createDirectory(at: base, withIntermediateDirectories: true)
-        return base.appendingPathComponent("parse-cache-v1.json")
+        return base.appendingPathComponent("parse-cache-v2.json")
     }()
 
     init(persistent: Bool = true) {

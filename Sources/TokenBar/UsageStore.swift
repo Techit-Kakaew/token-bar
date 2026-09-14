@@ -2,6 +2,7 @@ import Foundation
 import Combine
 import SwiftUI
 import AppKit
+import UserNotifications
 
 @MainActor
 final class UsageStore: ObservableObject {
@@ -10,6 +11,39 @@ final class UsageStore: ObservableObject {
     @Published var limits: [Provider: ProviderLimits] = [:]
     /// Raw events from the last 30 days (for per-day drill-down in the dashboard).
     @Published var recentEvents: [UsageEvent] = []
+    /// Conversations with a call in the last 15 minutes.
+    @Published var liveSessions: [LiveSession] = []
+    private var contextAlerted = Set<String>()
+
+    nonisolated static func buildLiveSessions(_ events: [UsageEvent], now: Date = Date()) -> [LiveSession] {
+        let cutoff = now.addingTimeInterval(-15 * 60)
+        var groups: [String: [UsageEvent]] = [:]
+        for e in events where !e.sessionId.isEmpty && e.timestamp >= now.addingTimeInterval(-6 * 3600) {
+            groups["\(e.provider.rawValue)|\(e.sessionId)", default: []].append(e)
+        }
+        return groups.compactMap { key, evs -> LiveSession? in
+            let sorted = evs.sorted { $0.timestamp < $1.timestamp }
+            guard let lastE = sorted.last, lastE.timestamp >= cutoff, let first = sorted.first else { return nil }
+            let window = lastE.contextWindow > 0 ? lastE.contextWindow : ContextWindows.window(for: lastE.model)
+            return LiveSession(id: key, provider: lastE.provider, project: lastE.project, source: lastE.source, model: lastE.model,
+                               started: first.timestamp, last: lastE.timestamp, calls: sorted.count,
+                               cost: sorted.reduce(0) { $0 + Pricing.cost($1) }, tokens: sorted.reduce(0) { $0 + $1.total },
+                               contextTokens: lastE.contextTokens, contextWindow: window)
+        }.sorted { $0.last > $1.last }
+    }
+
+    private func checkContextAlerts() {
+        for s in liveSessions where s.contextRatio >= 0.8 && !contextAlerted.contains(s.id) {
+            contextAlerted.insert(s.id)
+            guard Bundle.main.bundleIdentifier != nil else { continue }
+            let c = UNMutableNotificationContent()
+            c.title = L("ctx.title %@ %d", s.project, Int(s.contextRatio * 100))
+            c.body = L("ctx.body %@ %@ %@", s.provider.displayName, s.contextTokens.compact, s.contextWindow.compact)
+            c.sound = .default
+            UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: "tokenbar.ctx.\(s.id)", content: c, trigger: nil))
+        }
+        if contextAlerted.count > 200 { contextAlerted.removeAll() }
+    }
     let breaks = BreakReminder()
     let alerts = LimitAlerts()
     let updates = UpdateChecker()
@@ -164,9 +198,12 @@ final class UsageStore: ObservableObject {
             let codexLimits = CodexLimits.read()
             let recentTs = recent
             let recentEv = recent30
+            let live = Self.buildLiveSessions(recentEv)
             await MainActor.run {
                 self.stats = final
                 self.recentEvents = recentEv
+                self.liveSessions = live
+                self.checkContextAlerts()
                 self.breaks.update(with: recentTs)
                 self.budget.update(todaySpend: self.todaySpend, weekSpend: self.weekSpend)
                 self.limits[.codex] = codexLimits
