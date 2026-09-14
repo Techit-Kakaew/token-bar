@@ -58,6 +58,24 @@ if let i = CommandLine.arguments.firstIndex(of: "--flame-preview"), i + 1 < Comm
     print("wrote \(out.path) and \(out2.path)"); exit(0)
 }
 
+if let i = CommandLine.arguments.firstIndex(of: "--sprite-preview"), i + 1 < CommandLine.arguments.count {
+    let out = URL(fileURLWithPath: CommandLine.arguments[i + 1])
+    let name = i + 2 < CommandLine.arguments.count ? CommandLine.arguments[i + 2] : "cat"
+    let sheet = Sprites.sheet(named: name)
+    let scale: CGFloat = 8, cellW = 20 * scale, cellH = 16 * scale
+    let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: Int(cellW) * sheet.frames.count, pixelsHigh: Int(cellH),
+                               bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0)!
+    NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
+    NSGraphicsContext.current?.imageInterpolation = .none
+    NSColor(white: 0.85, alpha: 1).setFill(); NSRect(x: 0, y: 0, width: rep.pixelsWide, height: rep.pixelsHigh).fill()
+    for (f, img) in sheet.frames.enumerated() {
+        let w = img.size.width * scale, h = img.size.height * scale
+        img.draw(in: NSRect(x: CGFloat(f) * cellW + (cellW - w) / 2, y: (cellH - h) / 2, width: w, height: h))
+    }
+    try? rep.representation(using: .png, properties: [:])!.write(to: out)
+    print("wrote \(out.path) (\(sheet.frames.count) frames)"); exit(0)
+}
+
 if CommandLine.arguments.contains("--notify-test") {
     // Must run from the installed .app bundle: /Applications/TokenBar.app/Contents/MacOS/TokenBar --notify-test
     Task { @MainActor in

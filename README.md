@@ -98,6 +98,7 @@ All in the ⚙️ menu:
 | Break reminder | Continuous use (calls less than 15 min apart) for 90 min → "take a break" notification, repeating every 45 min. All three values adjustable. |
 | Hotkeys | Toggle the popover (default `⌥⇧T`) and open the dashboard. Carbon hotkeys, no Accessibility permission. |
 | Menu bar shows | Combined total, or one tool with its logo and limit. Toggle the number on / off. |
+| Menu bar animation | **Cat** (RunCat-style pixel cat, runs faster the longer your streak; optionally always on) or **Flame** (fire engulfs the icon at 25 / 50 / 75 / 100 % of the break threshold). Custom sprites: drop `frame0.png…` (black + alpha, ~18 px tall) into `~/.config/tokenbar/sprites/<name>/` and pick `<name>`. |
 | Theme / Language | System / light / dark; system / English / ไทย. |
 
 ## Privacy
@@ -127,6 +128,7 @@ swift test               # parser fixtures, pricing, streaks, export, versions
 ```
 
 Useful flags on the built binary: `--dump` (aggregated stats), `--streak`, `--notify-test`, `--icon`,
+`--flame-preview out.png`, `--sprite-preview out.png [name]`,
 `--snapshot out.png` / `--snapshot-dashboard out.png` (render views to PNG; env `TOKENBAR_SNAPSHOT_LANG=th`,
 `TOKENBAR_SNAPSHOT_SCHEME=light`, `TOKENBAR_SNAPSHOT_DAY=1`).
 

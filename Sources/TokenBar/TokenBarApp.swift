@@ -12,7 +12,8 @@ struct TokenBarApp: App {
             let focus = store.menuBarProvider
             let sev = store.alerts.severity(for: focus)
             // MenuBarExtra labels carry ONE image + ONE text, so everything is composed into those two.
-            let composed = MenuBarComposer.image(provider: focus, severity: sev, flameStage: store.flameStage, flameFrame: store.flameFrame)
+            let composed = MenuBarComposer.image(provider: focus, severity: sev, flameStage: store.flameStage,
+                                                 flameFrame: store.flameFrame, animation: store.menuBarAnimation)
             let text = menuBarText(focus: focus, severity: sev)
             HStack(spacing: 4) {
                 if composed.isTemplate {

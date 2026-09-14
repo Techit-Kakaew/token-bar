@@ -91,6 +91,11 @@ enum L10n {
         "update.error": ("Could not check for updates", "ตรวจสอบอัปเดตไม่ได้"),
         "update.badge %@": ("v%@ available", "มี v%@"),
         "Download": ("Download", "ดาวน์โหลด"), "Later": ("Later", "ไว้ก่อน"),
+        // menu bar animation
+        "Menu bar animation": ("Menu bar animation", "แอนิเมชันบน menubar"),
+        "Flame": ("Flame (by streak)", "เปลวไฟ (ตาม streak)"),
+        "Cat": ("Cat (runs faster with streak)", "แมววิ่ง (เร็วขึ้นตาม streak)"),
+        "Sprite always running": ("Always animate (even when idle)", "ขยับตลอด (แม้ไม่มี streak)"),
         // hotkeys / budget
         "Hotkey: popover": ("Hotkey · toggle popover", "คีย์ลัด · เปิด/ปิด popover"),
         "Hotkey: dashboard": ("Hotkey · dashboard", "คีย์ลัด · แดชบอร์ด"),

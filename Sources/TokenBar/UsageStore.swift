@@ -16,7 +16,16 @@ final class UsageStore: ObservableObject {
     let budget = Budget()
     let hotkeys = HotKeys()
 
-    // Menu-bar flame animation: runs only while the streak is ≥ 50% of the break threshold.
+    /// Menu-bar animation style: "flame" (engulfing fire by stage) or a sprite sheet name ("cat", or a custom folder).
+    @Published var menuBarAnimation: String = UserDefaults.standard.string(forKey: "menuBarAnimation") ?? "cat" {
+        didSet { UserDefaults.standard.set(menuBarAnimation, forKey: "menuBarAnimation"); flameTimer?.invalidate(); flameTimer = nil; updateFlameTimer() }
+    }
+    /// Sprite mode: animate always (RunCat style, speed follows streak) or only while a streak is active.
+    @Published var spriteAlwaysOn: Bool = UserDefaults.standard.object(forKey: "spriteAlwaysOn") as? Bool ?? true {
+        didSet { UserDefaults.standard.set(spriteAlwaysOn, forKey: "spriteAlwaysOn"); flameTimer?.invalidate(); flameTimer = nil; updateFlameTimer() }
+    }
+
+    // Menu-bar animation frame counter; the timer runs only when something is animating.
     @Published var flameFrame = 0
     private var flameTimer: Timer?
     var streakLevel: Double {
@@ -24,16 +33,23 @@ final class UsageStore: ObservableObject {
         return s.duration / 60 / Double(max(breaks.thresholdMinutes, 1))
     }
     var flameStage: Int { let l = streakLevel; return l >= 1 ? 4 : l >= 0.75 ? 3 : l >= 0.5 ? 2 : l >= 0.25 ? 1 : 0 }
+    private var currentInterval: TimeInterval = 0
     func updateFlameTimer() {
-        let want = flameStage >= 1
-        if want, flameTimer == nil {
-            flameTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 8, repeats: true) { [weak self] _ in
-                Task { @MainActor in
-                    guard let self else { return }
-                    self.flameFrame = (self.flameFrame + 1) % FlameSprite.frameCount
+        let sprite = menuBarAnimation != "flame"
+        let want = sprite ? (spriteAlwaysOn || streakLevel > 0) : flameStage >= 1
+        let interval = sprite ? Sprites.interval(level: streakLevel) : 1.0 / 8
+        if want {
+            if flameTimer == nil || abs(interval - currentInterval) > 0.01 {
+                flameTimer?.invalidate()
+                currentInterval = interval
+                flameTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
+                    Task { @MainActor in
+                        guard let self else { return }
+                        self.flameFrame &+= 1
+                    }
                 }
             }
-        } else if !want, let t = flameTimer {
+        } else if let t = flameTimer {
             t.invalidate(); flameTimer = nil; flameFrame = 0
         }
     }

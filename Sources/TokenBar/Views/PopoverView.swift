@@ -224,6 +224,13 @@ struct PopoverView: View {
                 }
             Toggle(L("Show number in menu bar"), isOn: Binding(get: { store.showNumberInBar }, set: { store.showNumberInBar = $0 }))
             Toggle(L("Claude limits (Keychain)"), isOn: Binding(get: { store.claudeLimitsEnabled }, set: { store.claudeLimitsEnabled = $0 }))
+            Picker(L("Menu bar animation"), selection: Binding(get: { store.menuBarAnimation }, set: { store.menuBarAnimation = $0 })) {
+                Text(L("Flame")).tag("flame")
+                ForEach(Sprites.availableNames(), id: \.self) { Text($0 == "cat" ? L("Cat") : $0).tag($0) }
+            }
+            if store.menuBarAnimation != "flame" {
+                Toggle(L("Sprite always running"), isOn: Binding(get: { store.spriteAlwaysOn }, set: { store.spriteAlwaysOn = $0 }))
+            }
             Picker(L("Menu bar shows"), selection: Binding(get: { store.menuBarProvider?.rawValue ?? "all" },
                                                          set: { store.menuBarProvider = Provider(rawValue: $0) })) {
                 Text(L("All providers")).tag("all")

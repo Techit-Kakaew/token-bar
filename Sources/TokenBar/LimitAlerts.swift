@@ -122,7 +122,15 @@ enum MenuBarComposer {
         return out
     }
 
-    static func image(provider: Provider?, severity: Int, flameStage: Int, flameFrame: Int) -> NSImage {
+    static func image(provider: Provider?, severity: Int, flameStage: Int, flameFrame: Int, animation: String = "flame") -> NSImage {
+        if animation != "flame" {
+            // RunCat-style sprite: replaces the icon entirely (tinted when a limit is over threshold)
+            let sheet = Sprites.sheet(named: animation)
+            let frame = sheet.frames[flameFrame % max(sheet.frames.count, 1)]
+            guard severity > 0 else { return frame }
+            let color: NSColor = severity >= 2 ? NSColor(red: 1.0, green: 0.35, blue: 0.35, alpha: 1) : NSColor(red: 1.0, green: 0.72, blue: 0.30, alpha: 1)
+            return tinted(frame, color)
+        }
         let base = MenuBarIconTint.image(provider: provider, severity: severity)
         guard flameStage >= 1 else { return base }
         let flame = FlameSprite.frames(stage: flameStage)[flameFrame % FlameSprite.frameCount]
