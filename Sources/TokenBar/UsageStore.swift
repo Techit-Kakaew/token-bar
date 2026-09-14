@@ -17,7 +17,7 @@ final class UsageStore: ObservableObject {
     let hotkeys = HotKeys()
 
     /// Menu-bar animation style: "flame" (engulfing fire by stage) or a sprite sheet name ("cat", or a custom folder).
-    @Published var menuBarAnimation: String = UserDefaults.standard.string(forKey: "menuBarAnimation") ?? "cat" {
+    @Published var menuBarAnimation: String = UserDefaults.standard.string(forKey: "menuBarAnimation") ?? "flame" {
         didSet { UserDefaults.standard.set(menuBarAnimation, forKey: "menuBarAnimation"); flameTimer?.invalidate(); flameTimer = nil; updateFlameTimer() }
     }
     /// Sprite mode: animate always (RunCat style, speed follows streak) or only while a streak is active.

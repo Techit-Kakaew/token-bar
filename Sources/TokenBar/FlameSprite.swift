@@ -2,15 +2,12 @@ import AppKit
 
 /// Procedurally drawn flame frames for the menu bar (SwiftUI animations don't run inside a status item).
 enum FlameSprite {
-    static let frameCount = 8
+    static var frameCount: Int { Sprites.pixelFire.count }
     private static var cache: [Int: [NSImage]] = [:]
 
     /// `stage` 2 = warming (orange), 3 = hot, 4 = blaze (red). Frames loop.
     static func frames(stage: Int) -> [NSImage] {
-        if let c = cache[stage] { return c }
-        let imgs = (0..<frameCount).map { draw(frame: $0, stage: stage) }
-        cache[stage] = imgs
-        return imgs
+        Sprites.fireFrames(stage: stage)   // pixel-art frames (RunCat-style); vector `draw` kept for reference
     }
 
     private static func draw(frame: Int, stage: Int) -> NSImage {

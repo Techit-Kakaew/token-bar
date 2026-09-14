@@ -142,6 +142,7 @@ enum MenuBarComposer {
         let inkColor = appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua ? NSColor.white : NSColor.black
         let icon: NSImage = base.isTemplate ? tinted(base, inkColor.withAlphaComponent(0.95)) : base
         let img = NSImage(size: size, flipped: false) { rect in
+            NSGraphicsContext.current?.imageInterpolation = .none   // keep pixel art crisp
             let fw = min(16 * grow, rect.width), fh = min(18 * grow, rect.height + 2)
             flame.draw(in: NSRect(x: (rect.width - fw) / 2, y: -1.5, width: fw, height: fh))
             let iconSize: CGFloat = 12
