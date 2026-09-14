@@ -1,0 +1,18 @@
+name: New tool / provider
+description: Ask for another AI tool to be supported
+labels: [provider]
+body:
+  - type: input
+    id: tool
+    attributes: { label: Tool name and version }
+    validations: { required: true }
+  - type: input
+    id: path
+    attributes: { label: Where it stores logs locally, placeholder: "~/.foo/sessions/*.jsonl" }
+    validations: { required: true }
+  - type: textarea
+    id: sample
+    attributes:
+      label: Anonymised sample of one record with token counts
+      render: json
+    validations: { required: true }

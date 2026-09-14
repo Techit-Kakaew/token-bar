@@ -1,0 +1,30 @@
+name: Bug report
+description: Something is wrong or misparsed
+labels: [bug]
+body:
+  - type: input
+    id: version
+    attributes: { label: TokenBar version, placeholder: "0.3.1 (⚙️ menu shows it)" }
+    validations: { required: true }
+  - type: input
+    id: macos
+    attributes: { label: macOS version, placeholder: "26.0 / 15.6 / 14.7" }
+    validations: { required: true }
+  - type: textarea
+    id: what
+    attributes: { label: What happened, description: What you saw vs what you expected. }
+    validations: { required: true }
+  - type: textarea
+    id: sample
+    attributes:
+      label: Log sample (for parser issues)
+      description: >
+        One or two lines from the tool's log with usage numbers, with any message text / paths / ids removed.
+        Claude: ~/.claude/projects/**/*.jsonl · Codex: ~/.codex/sessions · OpenCode: ~/.local/share/opencode/storage/message
+      render: json
+  - type: textarea
+    id: dump
+    attributes:
+      label: "`TokenBar --dump` output (optional)"
+      description: "`/Applications/TokenBar.app/Contents/MacOS/TokenBar --dump`"
+      render: text
