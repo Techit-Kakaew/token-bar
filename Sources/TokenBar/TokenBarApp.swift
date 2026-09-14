@@ -11,9 +11,8 @@ struct TokenBarApp: App {
         } label: {
             let focus = store.menuBarProvider
             let sev = store.alerts.severity(for: focus)
-            // MenuBarExtra labels carry ONE image + ONE text, so everything is composed into those two.
-            let composed = MenuBarComposer.image(provider: focus, severity: sev, flameStage: store.flameStage,
-                                                 flameFrame: store.flameFrame, animation: store.menuBarAnimation)
+            // MenuBarExtra labels carry ONE image + ONE text, so tokens and limit % are joined into one string.
+            let composed = MenuBarIconTint.image(provider: focus, severity: sev)
             let text = menuBarText(focus: focus, severity: sev)
             HStack(spacing: 4) {
                 if composed.isTemplate {

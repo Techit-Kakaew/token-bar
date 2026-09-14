@@ -28,54 +28,6 @@ if let i = CommandLine.arguments.firstIndex(of: "--export"), i + 1 < CommandLine
     RunLoop.main.run()
 }
 
-if let i = CommandLine.arguments.firstIndex(of: "--flame-preview"), i + 1 < CommandLine.arguments.count {
-    let out = URL(fileURLWithPath: CommandLine.arguments[i + 1])
-    let scale: CGFloat = 4, cell: CGFloat = 20 * scale
-    let stages = [1, 2, 3, 4]
-    let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: Int(cell) * FlameSprite.frameCount, pixelsHigh: Int(cell) * stages.count,
-                               bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0)!
-    NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
-    NSColor(white: 0.12, alpha: 1).setFill(); NSRect(x: 0, y: 0, width: rep.pixelsWide, height: rep.pixelsHigh).fill()
-    for (row, st) in stages.enumerated() {
-        for (f, img) in FlameSprite.frames(stage: st).enumerated() {
-            img.draw(in: NSRect(x: CGFloat(f) * cell + 2 * scale, y: CGFloat(row) * cell + scale, width: 16 * scale, height: 18 * scale))
-        }
-    }
-    try? rep.representation(using: .png, properties: [:])!.write(to: out)
-    // second sheet: composed menu-bar images (icon + flame) per stage
-    let out2 = out.deletingPathExtension().appendingPathExtension("composed.png")
-    let rep2 = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: Int(26 * scale) * FlameSprite.frameCount, pixelsHigh: Int(24 * scale) * 4,
-                                bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0)!
-    NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep2)
-    NSColor(white: 0.12, alpha: 1).setFill(); NSRect(x: 0, y: 0, width: rep2.pixelsWide, height: rep2.pixelsHigh).fill()
-    for (row, st) in stages.enumerated() {
-        for f in 0..<FlameSprite.frameCount {
-            let img = MenuBarComposer.image(provider: nil, severity: 0, flameStage: st, flameFrame: f)
-            img.draw(in: NSRect(x: CGFloat(f) * 26 * scale + 2 * scale, y: CGFloat(row) * 24 * scale + 2 * scale, width: 22 * scale, height: 20 * scale))
-        }
-    }
-    try? rep2.representation(using: .png, properties: [:])!.write(to: out2)
-    print("wrote \(out.path) and \(out2.path)"); exit(0)
-}
-
-if let i = CommandLine.arguments.firstIndex(of: "--sprite-preview"), i + 1 < CommandLine.arguments.count {
-    let out = URL(fileURLWithPath: CommandLine.arguments[i + 1])
-    let name = i + 2 < CommandLine.arguments.count ? CommandLine.arguments[i + 2] : "cat"
-    let sheet = Sprites.sheet(named: name)
-    let scale: CGFloat = 8, cellW = 20 * scale, cellH = 16 * scale
-    let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: Int(cellW) * sheet.frames.count, pixelsHigh: Int(cellH),
-                               bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0)!
-    NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
-    NSGraphicsContext.current?.imageInterpolation = .none
-    NSColor(white: 0.85, alpha: 1).setFill(); NSRect(x: 0, y: 0, width: rep.pixelsWide, height: rep.pixelsHigh).fill()
-    for (f, img) in sheet.frames.enumerated() {
-        let w = img.size.width * scale, h = img.size.height * scale
-        img.draw(in: NSRect(x: CGFloat(f) * cellW + (cellW - w) / 2, y: (cellH - h) / 2, width: w, height: h))
-    }
-    try? rep.representation(using: .png, properties: [:])!.write(to: out)
-    print("wrote \(out.path) (\(sheet.frames.count) frames)"); exit(0)
-}
-
 if CommandLine.arguments.contains("--notify-test") {
     // Must run from the installed .app bundle: /Applications/TokenBar.app/Contents/MacOS/TokenBar --notify-test
     Task { @MainActor in
