@@ -141,12 +141,20 @@ enum MenuBarComposer {
         let appearance = NSApp?.effectiveAppearance ?? NSAppearance.currentDrawing()
         let inkColor = appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua ? NSColor.white : NSColor.black
         let icon: NSImage = base.isTemplate ? tinted(base, inkColor.withAlphaComponent(0.95)) : base
+        // Subtle: narrower flame, translucent, icon on top with a faint contrasting halo so it stays legible.
+        let halo = tinted(base.isTemplate ? base : base, inkColor == .white ? NSColor.black.withAlphaComponent(0.55) : NSColor.white.withAlphaComponent(0.7))
         let img = NSImage(size: size, flipped: false) { rect in
             NSGraphicsContext.current?.imageInterpolation = .none   // keep pixel art crisp
-            let fw = min(16 * grow, rect.width), fh = min(18 * grow, rect.height + 2)
-            flame.draw(in: NSRect(x: (rect.width - fw) / 2, y: -1.5, width: fw, height: fh))
-            let iconSize: CGFloat = 12
-            icon.draw(in: NSRect(x: (rect.width - iconSize) / 2, y: 1.5, width: iconSize, height: iconSize))
+            let fw = min(13 * grow, rect.width), fh = min(18 * grow, rect.height + 2)
+            let alpha: CGFloat = [0, 0.55, 0.62, 0.7, 0.78][min(flameStage, 4)]
+            flame.draw(in: NSRect(x: (rect.width - fw) / 2, y: -1.5, width: fw, height: fh),
+                       from: .zero, operation: .sourceOver, fraction: alpha)
+            let iconSize: CGFloat = 12.5
+            let iconRect = NSRect(x: (rect.width - iconSize) / 2, y: 1.5, width: iconSize, height: iconSize)
+            for d in [(-0.6, 0.0), (0.6, 0.0), (0.0, -0.6), (0.0, 0.6)] {
+                halo.draw(in: iconRect.offsetBy(dx: CGFloat(d.0), dy: CGFloat(d.1)), from: .zero, operation: .sourceOver, fraction: 0.6)
+            }
+            icon.draw(in: iconRect)
             return true
         }
         img.isTemplate = false
