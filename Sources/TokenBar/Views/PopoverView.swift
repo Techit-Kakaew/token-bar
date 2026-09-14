@@ -157,20 +157,39 @@ struct PopoverView: View {
 
     @ViewBuilder
     private var streakRow: some View {
-        if let s = store.breaks.streak {
-            let mins = Int(s.duration / 60)
+        let debugMins = ProcessInfo.processInfo.environment["TOKENBAR_SNAPSHOT_STREAK_MIN"].flatMap(Int.init)
+        if let s = store.breaks.streak ?? debugMins.map({ BreakReminder.Streak(start: Date().addingTimeInterval(-Double($0) * 60), last: Date()) }) {
+            let mins = debugMins ?? Int(s.duration / 60)
             let over = mins >= store.breaks.thresholdMinutes
             let dur = mins >= 60 ? L("%dh %dm", mins / 60, mins % 60) : L("%dm", mins)
-            HStack(spacing: 6) {
-                Image(systemName: over ? "cup.and.saucer.fill" : "flame.fill")
-                    .font(.system(size: 10))
-                Text(over ? L("streak over %@", dur) : L("streak %@", dur))
-                    .font(.system(size: 11, weight: .medium))
-                Spacer()
+            let level = Double(mins) / Double(max(store.breaks.thresholdMinutes, 1))
+            HStack(spacing: 8) {
+                FlameBadge(level: level, size: 18) {
+                    Image(systemName: over ? "cup.and.saucer.fill" : "flame.fill")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundStyle(level >= 0.25 ? .white : .secondary)
+                }
+                .frame(width: 26, height: 26)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(over ? L("streak over %@", dur) : L("streak %@", dur))
+                        .font(.system(size: 11, weight: .medium))
+                    // stage bar: fills toward the break threshold
+                    GeometryReader { g in
+                        ZStack(alignment: .leading) {
+                            Capsule().fill(.primary.opacity(0.08))
+                            Capsule().fill(LinearGradient(colors: [Color(red: 1, green: 0.8, blue: 0.3), Color(red: 1, green: 0.35, blue: 0.25)],
+                                                          startPoint: .leading, endPoint: .trailing))
+                                .frame(width: max(2, g.size.width * CGFloat(min(level, 1))))
+                        }
+                    }.frame(height: 3)
+                }
+                Text("\(Int((min(level, 1) * 100).rounded()))%")
+                    .font(.system(size: 10.5, weight: .bold, design: .rounded)).monospacedDigit()
+                    .foregroundStyle(level >= 1 ? Color(red: 1.0, green: 0.35, blue: 0.25) : (level >= 0.5 ? Color(red: 1.0, green: 0.6, blue: 0.2) : .secondary))
             }
             .foregroundStyle(over ? Color(red: 1.0, green: 0.72, blue: 0.3) : .secondary)
             .padding(.horizontal, 10).padding(.vertical, 5)
-            .glassCard(accent: over ? Color(red: 1.0, green: 0.72, blue: 0.3) : nil, radius: 8)
+            .glassCard(accent: level >= 0.5 ? Color(red: 1.0, green: 0.55, blue: 0.2).opacity(min(level, 1)) : nil, radius: 8)
         }
     }
 
