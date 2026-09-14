@@ -23,9 +23,9 @@ final class UsageStore: ObservableObject {
         guard let s = breaks.streak else { return 0 }
         return s.duration / 60 / Double(max(breaks.thresholdMinutes, 1))
     }
-    var flameStage: Int { let l = streakLevel; return l >= 1 ? 4 : l >= 0.75 ? 3 : l >= 0.5 ? 2 : 0 }
+    var flameStage: Int { let l = streakLevel; return l >= 1 ? 4 : l >= 0.75 ? 3 : l >= 0.5 ? 2 : l >= 0.25 ? 1 : 0 }
     func updateFlameTimer() {
-        let want = flameStage >= 2
+        let want = flameStage >= 1
         if want, flameTimer == nil {
             flameTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 8, repeats: true) { [weak self] _ in
                 Task { @MainActor in

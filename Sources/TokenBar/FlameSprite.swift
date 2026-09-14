@@ -18,14 +18,17 @@ enum FlameSprite {
         let img = NSImage(size: size, flipped: false) { rect in
             guard let g = NSGraphicsContext.current?.cgContext else { return false }
             let t = Double(frame) / Double(frameCount) * 2 * .pi
-            let heat = [0, 0, 0.55, 0.8, 1.0][min(stage, 4)]
-            let outer = stage >= 4 ? NSColor(red: 1.0, green: 0.30, blue: 0.22, alpha: 1) : NSColor(red: 1.0, green: 0.55, blue: 0.18, alpha: 1)
+            // stage 1 = small ember (25%), 2 = 50%, 3 = 75%, 4 = 100% blaze
+            let heat = [0, 0.15, 0.55, 0.8, 1.0][min(stage, 4)]
+            let outer = stage >= 4 ? NSColor(red: 1.0, green: 0.30, blue: 0.22, alpha: 1)
+                      : stage == 1 ? NSColor(red: 1.0, green: 0.68, blue: 0.25, alpha: 1)
+                      : NSColor(red: 1.0, green: 0.55, blue: 0.18, alpha: 1)
             let inner = NSColor(red: 1.0, green: 0.85, blue: 0.35, alpha: 1)
             let w = rect.width, h = rect.height
             let cx = w / 2
             // outer tongue
             g.saveGState()
-            flamePath(cx: cx, base: 1.5, height: h * (0.78 + 0.12 * heat) * (0.92 + 0.08 * sin(t)),
+            flamePath(cx: cx, base: 1.5, height: h * (0.55 + 0.35 * heat) * (0.92 + 0.08 * sin(t)),
                       width: w * 0.42 * (0.9 + 0.1 * cos(t * 1.3)), lean: CGFloat(sin(t)) * 1.6, tipWobble: CGFloat(sin(t * 2 + 1)) * 1.2)
                 .addClip()
             g.drawLinearGradient(
@@ -36,7 +39,7 @@ enum FlameSprite {
             g.restoreGState()
             // inner core
             g.saveGState()
-            flamePath(cx: cx, base: 1.5, height: h * (0.42 + 0.08 * heat) * (0.9 + 0.1 * sin(t * 1.7 + 0.8)),
+            flamePath(cx: cx, base: 1.5, height: h * (0.28 + 0.22 * heat) * (0.9 + 0.1 * sin(t * 1.7 + 0.8)),
                       width: w * 0.2, lean: CGFloat(sin(t + 0.6)) * 0.8, tipWobble: CGFloat(cos(t * 2.3)) * 0.6)
                 .addClip()
             inner.setFill(); rect.fill()

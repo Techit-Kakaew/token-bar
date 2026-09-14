@@ -31,7 +31,7 @@ if let i = CommandLine.arguments.firstIndex(of: "--export"), i + 1 < CommandLine
 if let i = CommandLine.arguments.firstIndex(of: "--flame-preview"), i + 1 < CommandLine.arguments.count {
     let out = URL(fileURLWithPath: CommandLine.arguments[i + 1])
     let scale: CGFloat = 4, cell: CGFloat = 20 * scale
-    let stages = [2, 3, 4]
+    let stages = [1, 2, 3, 4]
     let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: Int(cell) * FlameSprite.frameCount, pixelsHigh: Int(cell) * stages.count,
                                bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0)!
     NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)

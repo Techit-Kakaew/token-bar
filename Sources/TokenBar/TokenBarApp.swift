@@ -17,7 +17,7 @@ struct TokenBarApp: App {
                 } else {
                     Image(nsImage: MenuBarIconTint.image(provider: focus, severity: 0)).renderingMode(.template)
                 }
-                if store.flameStage >= 2 {
+                if store.flameStage >= 1 {
                     Image(nsImage: FlameSprite.frames(stage: store.flameStage)[store.flameFrame % FlameSprite.frameCount])
                         .renderingMode(.original)
                 }
