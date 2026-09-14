@@ -55,8 +55,11 @@ Drag TokenBar.app to Applications.
 
 This build is not notarized. If macOS says the app is damaged or from an
 unidentified developer, run once in Terminal:
-  xattr -cr /Applications/TokenBar.app
-then open it normally (or right-click → Open).
+
+  xattr -cr /Applications/TokenBar.app && codesign --force --deep --sign - /Applications/TokenBar.app
+
+then open it normally. If it is still blocked: System Settings →
+Privacy & Security → scroll down → "Open Anyway".
 TXT
   rm -f "$DMG"
   hdiutil create -volname "TokenBar" -srcfolder "$STAGE" -ov -format UDZO "$DMG" >/dev/null

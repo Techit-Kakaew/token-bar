@@ -37,11 +37,14 @@ Download the latest `.dmg` from **[Releases](https://github.com/Techit-Kakaew/to
 TokenBar.app to Applications. Universal binary (Apple Silicon + Intel), macOS 14 or newer.
 
 The app is **not notarized** yet (no Apple Developer account), so on first launch macOS may say it is damaged or from an
-unidentified developer. Clear the quarantine flag once and open it normally:
+unidentified developer. Run this once (removes the download quarantine flag and re-signs the app locally), then open it normally:
 
 ```bash
-xattr -cr /Applications/TokenBar.app
+xattr -cr /Applications/TokenBar.app && codesign --force --deep --sign - /Applications/TokenBar.app
 ```
+
+If macOS still blocks it (macOS 15+ removed the right-click → Open bypass), go to
+**System Settings → Privacy & Security**, scroll down and click **Open Anyway**.
 
 On first launch TokenBar explains what it reads and asks before requesting anything:
 

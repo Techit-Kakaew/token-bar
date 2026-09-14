@@ -42,9 +42,9 @@ jobs:
           1. Download \`${{ steps.sums.outputs.dmg }}\`, drag **TokenBar.app** to Applications.
           2. Universal (Apple Silicon + Intel), **not notarized**. If macOS refuses to open it, run once:
              \`\`\`bash
-             xattr -cr /Applications/TokenBar.app
+             xattr -cr /Applications/TokenBar.app && codesign --force --deep --sign - /Applications/TokenBar.app
              \`\`\`
-             then open normally (or right-click → Open).
+             then open normally. Still blocked? System Settings → Privacy & Security → **Open Anyway**.
           3. Allow **Keychain** (reads Claude Code's login for 5h / weekly limits) and **Notifications** on first launch.
 
           Requires macOS 14+ (Liquid Glass UI on macOS 26).
