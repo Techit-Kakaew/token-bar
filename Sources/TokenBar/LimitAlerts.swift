@@ -111,25 +111,33 @@ enum MenuBarIconTint {
 /// Composes the single menu-bar image: provider/app icon (+ optional flame frame). MenuBarExtra labels
 /// only carry one image, so anything animated has to be baked into it.
 enum MenuBarComposer {
+    private static func tinted(_ template: NSImage, _ color: NSColor) -> NSImage {
+        let out = NSImage(size: template.size, flipped: false) { rect in
+            template.draw(in: rect)
+            color.set()
+            rect.fill(using: .sourceAtop)
+            return true
+        }
+        out.isTemplate = false
+        return out
+    }
+
     static func image(provider: Provider?, severity: Int, flameStage: Int, flameFrame: Int) -> NSImage {
         let base = MenuBarIconTint.image(provider: provider, severity: severity)
         guard flameStage >= 1 else { return base }
         let flame = FlameSprite.frames(stage: flameStage)[flameFrame % FlameSprite.frameCount]
-        let gap: CGFloat = 2
-        let size = NSSize(width: base.size.width + gap + flame.size.width, height: 18)
+        // Flame engulfs the icon: drawn larger behind it, icon on top so the tongues show around the edges.
+        let size = NSSize(width: 24, height: 20)
+        let grow: CGFloat = [1.0, 1.05, 1.15, 1.25, 1.35][min(flameStage, 4)]
+        // Tint the template icon into its own image first (sourceAtop on the composite would also paint the flame).
+        let appearance = NSApp?.effectiveAppearance ?? NSAppearance.currentDrawing()
+        let inkColor = appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua ? NSColor.white : NSColor.black
+        let icon: NSImage = base.isTemplate ? tinted(base, inkColor.withAlphaComponent(0.95)) : base
         let img = NSImage(size: size, flipped: false) { rect in
-            // base: template → tint with the current label colour so it follows the menu bar appearance
-            let baseRect = NSRect(x: 0, y: (rect.height - base.size.height) / 2, width: base.size.width, height: base.size.height)
-            if base.isTemplate {
-                NSGraphicsContext.current?.cgContext.saveGState()
-                base.draw(in: baseRect)
-                NSColor.labelColor.set()
-                baseRect.fill(using: .sourceAtop)
-                NSGraphicsContext.current?.cgContext.restoreGState()
-            } else {
-                base.draw(in: baseRect)
-            }
-            flame.draw(in: NSRect(x: base.size.width + gap, y: 0, width: flame.size.width, height: flame.size.height))
+            let fw = min(16 * grow, rect.width), fh = min(18 * grow, rect.height + 2)
+            flame.draw(in: NSRect(x: (rect.width - fw) / 2, y: -1.5, width: fw, height: fh))
+            let iconSize: CGFloat = 12
+            icon.draw(in: NSRect(x: (rect.width - iconSize) / 2, y: 1.5, width: iconSize, height: iconSize))
             return true
         }
         img.isTemplate = false

@@ -42,7 +42,20 @@ if let i = CommandLine.arguments.firstIndex(of: "--flame-preview"), i + 1 < Comm
         }
     }
     try? rep.representation(using: .png, properties: [:])!.write(to: out)
-    print("wrote \(out.path)"); exit(0)
+    // second sheet: composed menu-bar images (icon + flame) per stage
+    let out2 = out.deletingPathExtension().appendingPathExtension("composed.png")
+    let rep2 = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: Int(26 * scale) * FlameSprite.frameCount, pixelsHigh: Int(24 * scale) * 4,
+                                bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0)!
+    NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep2)
+    NSColor(white: 0.12, alpha: 1).setFill(); NSRect(x: 0, y: 0, width: rep2.pixelsWide, height: rep2.pixelsHigh).fill()
+    for (row, st) in stages.enumerated() {
+        for f in 0..<FlameSprite.frameCount {
+            let img = MenuBarComposer.image(provider: nil, severity: 0, flameStage: st, flameFrame: f)
+            img.draw(in: NSRect(x: CGFloat(f) * 26 * scale + 2 * scale, y: CGFloat(row) * 24 * scale + 2 * scale, width: 22 * scale, height: 20 * scale))
+        }
+    }
+    try? rep2.representation(using: .png, properties: [:])!.write(to: out2)
+    print("wrote \(out.path) and \(out2.path)"); exit(0)
 }
 
 if CommandLine.arguments.contains("--notify-test") {
