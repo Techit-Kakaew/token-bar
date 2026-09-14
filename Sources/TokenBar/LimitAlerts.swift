@@ -107,3 +107,32 @@ enum MenuBarIconTint {
         return img
     }
 }
+
+/// Composes the single menu-bar image: provider/app icon (+ optional flame frame). MenuBarExtra labels
+/// only carry one image, so anything animated has to be baked into it.
+enum MenuBarComposer {
+    static func image(provider: Provider?, severity: Int, flameStage: Int, flameFrame: Int) -> NSImage {
+        let base = MenuBarIconTint.image(provider: provider, severity: severity)
+        guard flameStage >= 1 else { return base }
+        let flame = FlameSprite.frames(stage: flameStage)[flameFrame % FlameSprite.frameCount]
+        let gap: CGFloat = 2
+        let size = NSSize(width: base.size.width + gap + flame.size.width, height: 18)
+        let img = NSImage(size: size, flipped: false) { rect in
+            // base: template → tint with the current label colour so it follows the menu bar appearance
+            let baseRect = NSRect(x: 0, y: (rect.height - base.size.height) / 2, width: base.size.width, height: base.size.height)
+            if base.isTemplate {
+                NSGraphicsContext.current?.cgContext.saveGState()
+                base.draw(in: baseRect)
+                NSColor.labelColor.set()
+                baseRect.fill(using: .sourceAtop)
+                NSGraphicsContext.current?.cgContext.restoreGState()
+            } else {
+                base.draw(in: baseRect)
+            }
+            flame.draw(in: NSRect(x: base.size.width + gap, y: 0, width: flame.size.width, height: flame.size.height))
+            return true
+        }
+        img.isTemplate = false
+        return img
+    }
+}

@@ -11,25 +11,17 @@ struct TokenBarApp: App {
         } label: {
             let focus = store.menuBarProvider
             let sev = store.alerts.severity(for: focus)
+            // MenuBarExtra labels carry ONE image + ONE text, so everything is composed into those two.
+            let composed = MenuBarComposer.image(provider: focus, severity: sev, flameStage: store.flameStage, flameFrame: store.flameFrame)
+            let text = menuBarText(focus: focus, severity: sev)
             HStack(spacing: 4) {
-                if sev > 0 {
-                    Image(nsImage: MenuBarIconTint.image(provider: focus, severity: sev)).renderingMode(.original)
+                if composed.isTemplate {
+                    Image(nsImage: composed).renderingMode(.template)
                 } else {
-                    Image(nsImage: MenuBarIconTint.image(provider: focus, severity: 0)).renderingMode(.template)
+                    Image(nsImage: composed).renderingMode(.original)
                 }
-                if store.flameStage >= 1 {
-                    Image(nsImage: FlameSprite.frames(stage: store.flameStage)[store.flameFrame % FlameSprite.frameCount])
-                        .renderingMode(.original)
-                }
-                if store.showNumberInBar {
-                    Text(store.menuBarTokens.compact)
-                        .font(.system(size: 11, weight: .medium, design: .rounded))
-                        .monospacedDigit()
-                }
-                if sev > 0, let w = store.alerts.worst(for: focus) {
-                    Text("· \(Int(w.limit.percent))%")
-                        .font(.system(size: 11, weight: .bold, design: .rounded))
-                        .monospacedDigit()
+                if !text.isEmpty {
+                    Text(text).font(.system(size: 11, weight: .medium, design: .rounded)).monospacedDigit()
                 }
             }
         }
@@ -41,6 +33,17 @@ struct TokenBarApp: App {
         .defaultSize(width: 980, height: 680)
         .windowResizability(.contentMinSize)
         .windowStyle(.hiddenTitleBar)
+    }
+}
+
+extension TokenBarApp {
+    /// Tokens (if enabled) plus the worst limit percentage while over threshold.
+    func menuBarText(focus: Provider?, severity: Int) -> String {
+        var text = store.showNumberInBar ? store.menuBarTokens.compact : ""
+        if severity > 0, let w = store.alerts.worst(for: focus) {
+            text += (text.isEmpty ? "" : " · ") + "\(Int(w.limit.percent))%"
+        }
+        return text
     }
 }
 
