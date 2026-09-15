@@ -47,6 +47,10 @@ xattr -cr /Applications/TokenBar.app && codesign --force --deep --sign - /Applic
 If macOS still blocks it (macOS 15+ removed the right-click → Open bypass), go to
 **System Settings → Privacy & Security**, scroll down and click **Open Anyway**.
 
+**Updating**: TokenBar checks GitHub once a day. When a new version exists a badge appears in the popover footer —
+one click downloads the `.dmg`, verifies its SHA-256 against the release, swaps the app bundle in place, clears
+quarantine, re-signs and relaunches. No Terminal needed after the first install.
+
 On first launch TokenBar explains what it reads and asks before requesting anything:
 
 - **Claude limits** (optional) — reads Claude Code's login token from your Keychain to fetch 5h / weekly limits. macOS prompts once; choose *Always Allow*.
@@ -106,7 +110,7 @@ All in the ⚙️ menu:
 ## Privacy
 
 - Reads local log files only. Nothing is uploaded; no telemetry, no analytics, no identifiers.
-- Network calls: the optional Claude limits request above, and a once-a-day check of the GitHub Releases API for new versions. Both can be disabled.
+- Network calls: the optional Claude limits request above, a once-a-day check of the GitHub Releases API for new versions, and — only when you click *Update* — the download of the release `.dmg` from GitHub.
 - Settings are stored in `UserDefaults` (`dev.techit.tokenbar.app`); parsed results are cached in `~/Library/Caches/dev.techit.tokenbar.app/`.
 
 ## Cost estimates

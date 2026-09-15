@@ -28,6 +28,28 @@ if let i = CommandLine.arguments.firstIndex(of: "--export"), i + 1 < CommandLine
     RunLoop.main.run()
 }
 
+if CommandLine.arguments.contains("--self-update") {
+    // Test the in-app update pipeline against the latest release, regardless of version. Run from the installed bundle.
+    Task { @MainActor in
+        let u = UpdateChecker()
+        guard await u.check(manual: false, force: true) else { print("check failed"); exit(1) }
+        print("latest: \(u.latest ?? "?")  dmg: \(u.dmgURL?.lastPathComponent ?? "-")  sha: \(u.shaURL != nil)")
+        let t = Task { @MainActor in
+            var last = ""
+            while true {
+                let d = "\(u.phase)"; if d != last { print("phase: \(d)"); last = d }
+                if case .failed = u.phase { exit(1) }
+                try? await Task.sleep(for: .milliseconds(200))
+            }
+        }
+        await u.installUpdate()
+        t.cancel()
+        if case .failed(let m) = u.phase { print("FAILED: \(m)"); exit(1) }
+        exit(0)
+    }
+    RunLoop.main.run()
+}
+
 if CommandLine.arguments.contains("--notify-test") {
     // Must run from the installed .app bundle: /Applications/TokenBar.app/Contents/MacOS/TokenBar --notify-test
     Task { @MainActor in

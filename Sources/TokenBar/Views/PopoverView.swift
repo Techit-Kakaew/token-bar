@@ -317,6 +317,36 @@ struct PopoverView: View {
         .frame(width: 20)
     }
 
+    /// Footer badge: one click downloads + installs; shows progress; right-click for the release page.
+    @ViewBuilder
+    private func updateBadge(_ v: String) -> some View {
+        let accent = Color(red: 0.55, green: 0.65, blue: 1.0)
+        switch store.updates.phase {
+        case .idle, .failed:
+            Button { Task { await store.updates.installUpdate() } } label: {
+                Label(L("update.badge.install %@", v), systemImage: "arrow.down.circle.fill")
+                    .font(.system(size: 10.5, weight: .semibold)).foregroundStyle(accent)
+                    .padding(.horizontal, 8).padding(.vertical, 4)
+                    .glassCard(accent: accent, radius: 7, interactive: true)
+            }
+            .buttonStyle(.plain)
+            .help(L("update.current %@", store.updates.current))
+            .contextMenu { Button(L("Release page")) { store.updates.openReleasePage() } }
+            if case .failed(let msg) = store.updates.phase {
+                Text(L("update.failed %@", msg)).font(.system(size: 9.5)).foregroundStyle(.red).lineLimit(1).minimumScaleFactor(0.7)
+                    .help(msg)
+            }
+        case .downloading(let p):
+            HStack(spacing: 6) {
+                ProgressView(value: p).progressViewStyle(.linear).frame(width: 70)
+                Text(L("update.downloading %d", Int(p * 100))).font(.system(size: 10, design: .monospaced)).foregroundStyle(.secondary)
+            }
+        case .verifying: Text(L("update.verifying")).font(.system(size: 10)).foregroundStyle(.secondary)
+        case .installing: Text(L("update.installing")).font(.system(size: 10)).foregroundStyle(.secondary)
+        case .relaunching: Text(L("update.relaunching")).font(.system(size: 10)).foregroundStyle(.secondary)
+        }
+    }
+
     private var footer: some View {
         HStack(spacing: 10) {
             Button {
@@ -330,16 +360,7 @@ struct PopoverView: View {
             }
             .buttonStyle(.plain)
             Spacer()
-            if let v = store.updates.latest {
-                Button {
-                    if let u = store.updates.latestURL { NSWorkspace.shared.open(u) }
-                } label: {
-                    Label(L("update.badge %@", v), systemImage: "arrow.down.circle.fill")
-                        .font(.system(size: 10.5, weight: .semibold))
-                        .foregroundStyle(Color(red: 0.55, green: 0.65, blue: 1.0))
-                }
-                .buttonStyle(.plain)
-            }
+            if let v = store.updates.latest { updateBadge(v) }
             if let t = store.lastRefresh {
                 Text(L("updated %@", t.formatted(date: .omitted, time: .shortened)))
                     .font(.system(size: 10, design: .monospaced)).foregroundStyle(.tertiary)
