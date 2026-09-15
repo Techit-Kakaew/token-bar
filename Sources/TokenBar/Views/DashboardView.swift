@@ -72,7 +72,10 @@ struct DashboardView: View {
     private var header: some View {
         HStack(alignment: .lastTextBaseline, spacing: 16) {
             VStack(alignment: .leading, spacing: 2) {
-                Text("TOKENBAR · DASHBOARD").font(.system(size: 11, weight: .heavy)).tracking(2).foregroundStyle(.secondary)
+                HStack(spacing: 8) {
+                    AppIconView(size: 20)
+                    Text("TOKENBAR · DASHBOARD").font(.system(size: 11, weight: .heavy)).tracking(2).foregroundStyle(.secondary)
+                }
                 HStack(alignment: .lastTextBaseline, spacing: 10) {
                     Text(store.totalTokens.compact).font(.system(size: 40, weight: .black, design: .rounded)).contentTransition(.numericText())
                     Text(L("tokens")).font(.system(size: 14)).foregroundStyle(.tertiary)

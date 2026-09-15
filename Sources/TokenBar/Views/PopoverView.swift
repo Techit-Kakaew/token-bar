@@ -129,7 +129,8 @@ struct PopoverView: View {
 
     private var topBar: some View {
         VStack(alignment: .leading, spacing: 6) {
-            HStack {
+            HStack(spacing: 7) {
+                AppIconView(size: 18)
                 Text("TOKENBAR").font(.system(size: 10, weight: .heavy)).tracking(2).foregroundStyle(.secondary)
                 Spacer()
                 windowPicker

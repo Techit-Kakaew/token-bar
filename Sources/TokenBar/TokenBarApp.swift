@@ -78,6 +78,20 @@ enum MenuBarIcon {
     }()
 }
 
+/// Small app-icon view for headers (the coloured AppIcon; falls back to the template menu-bar glyph).
+struct AppIconView: View {
+    var size: CGFloat = 18
+    var body: some View {
+        if Bundle.main.bundleIdentifier != nil, let icns = Bundle.main.url(forResource: "AppIcon", withExtension: "icns"),
+           let img = NSImage(contentsOf: icns) {
+            Image(nsImage: img).resizable().interpolation(.high).frame(width: size, height: size)
+        } else {
+            Image(nsImage: MenuBarIcon.image).renderingMode(.template).resizable().frame(width: size * 0.8, height: size * 0.8)
+                .foregroundStyle(.secondary)
+        }
+    }
+}
+
 /// Vendor logos (SVG, template-tinted) from Resources/logos. Falls back to SF Symbols.
 enum ProviderLogo {
     private static var cache: [Provider: NSImage] = [:]
