@@ -51,6 +51,29 @@ struct PopoverView: View {
 
     private var visibleProviders: [Provider] { store.visibleProviders }
 
+    /// "Hidden: [Codex CLI ×] [Gemini ×]" — click a chip to bring the card back.
+    private var hiddenChips: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "eye.slash").font(.system(size: 9)).foregroundStyle(.tertiary)
+            Text(L("Hidden")).font(.system(size: 10)).foregroundStyle(.tertiary)
+            ForEach(store.hiddenButAvailable) { p in
+                Button { withAnimation(.snappy(duration: 0.25)) { store.setHidden(p, false) } } label: {
+                    HStack(spacing: 4) {
+                        ProviderLogoView(provider: p, size: 8).foregroundStyle(.secondary)
+                        Text(p.displayName).font(.system(size: 10, weight: .medium))
+                        Image(systemName: "plus.circle.fill").font(.system(size: 9)).foregroundStyle(.tertiary)
+                    }
+                    .padding(.horizontal, 7).padding(.vertical, 3)
+                    .glassCard(radius: 7, interactive: true)
+                }
+                .buttonStyle(.plain)
+                .help(L("Show %@", p.displayName))
+            }
+            Spacer()
+        }
+        .padding(.horizontal, 4).padding(.top, 2)
+    }
+
     private var onboardingCard: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 8) {
@@ -93,9 +116,12 @@ struct PopoverView: View {
             }
             ForEach(visibleProviders) { p in
                 if let s = store.stats[p] {
-                    ProviderCard(stats: s, window: store.window, limits: store.limits[p])
+                    ProviderCard(stats: s, window: store.window, limits: store.limits[p],
+                                 onHide: { withAnimation(.snappy(duration: 0.25)) { store.setHidden(p, true) } })
+                        .transition(.asymmetric(insertion: .opacity.combined(with: .scale(scale: 0.98)), removal: .opacity.combined(with: .scale(scale: 0.96))))
                 }
             }
+            if !store.hiddenButAvailable.isEmpty { hiddenChips }
         }
         .padding(.horizontal, 12)
         .padding(.bottom, 8)
@@ -225,6 +251,11 @@ struct PopoverView: View {
                 }
             Toggle(L("Show number in menu bar"), isOn: Binding(get: { store.showNumberInBar }, set: { store.showNumberInBar = $0 }))
             Toggle(L("Claude limits (Keychain)"), isOn: Binding(get: { store.claudeLimitsEnabled }, set: { store.claudeLimitsEnabled = $0 }))
+            Menu(L("Hidden providers")) {
+                ForEach(store.availableProviders) { p in
+                    Toggle(p.displayName, isOn: Binding(get: { store.hiddenProviders.contains(p) }, set: { store.setHidden(p, $0) }))
+                }
+            }
             Picker(L("Menu bar shows"), selection: Binding(get: { store.menuBarMode.isEmpty ? "all" : store.menuBarMode },
                                                          set: { store.menuBarMode = $0 == "all" ? "" : $0 })) {
                 Text(L("All providers")).tag("all")

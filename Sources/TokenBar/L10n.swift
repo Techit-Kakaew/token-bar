@@ -41,6 +41,9 @@ enum L10n {
         "cache read": ("cache read", "cache อ่าน"), "cache write": ("cache write", "cache เขียน"),
         "· stale: %@": ("· stale: %@", "· ค้าง: %@"),
         "· as of %@": ("· as of %@", "· ณ %@"),
+        // hide / show providers
+        "Hide %@": ("Hide %@", "ซ่อน %@"), "Show %@": ("Show %@", "แสดง %@"),
+        "Hidden": ("Hidden:", "ซ่อนอยู่:"), "Hidden providers": ("Hidden providers", "ค่ายที่ซ่อน"),
         // settings menu
         "Launch at login": ("Launch at login", "เปิดตอน Login"),
         "Show number in menu bar": ("Show number in menu bar", "แสดงตัวเลขบน menubar"),

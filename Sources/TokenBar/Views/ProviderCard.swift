@@ -4,7 +4,9 @@ struct ProviderCard: View {
     let stats: ProviderStats
     let window: Window
     var limits: ProviderLimits? = nil
+    var onHide: (() -> Void)? = nil
     @State private var expanded = false
+    @State private var hovering = false
 
     private var color: Color {
         let (r, g, b) = stats.provider.accent
@@ -31,6 +33,10 @@ struct ProviderCard: View {
         .glassCard(accent: color)
         .contentShape(Rectangle())
         .onTapGesture { withAnimation(.snappy(duration: 0.2)) { expanded.toggle() } }
+        .onHover { hovering = $0 }
+        .contextMenu {
+            if let onHide { Button(L("Hide %@", stats.provider.displayName), systemImage: "eye.slash") { onHide() } }
+        }
     }
 
     private var header: some View {
@@ -48,6 +54,15 @@ struct ProviderCard: View {
                 Text(last.agoShort)
                     .font(.system(size: 10, design: .monospaced))
                     .foregroundStyle(.tertiary)
+            }
+            if hovering, let onHide {
+                Button { onHide() } label: {
+                    Image(systemName: "eye.slash").font(.system(size: 10, weight: .semibold)).foregroundStyle(.secondary)
+                        .frame(width: 18, height: 18).background(Circle().fill(.primary.opacity(0.08)))
+                }
+                .buttonStyle(.plain)
+                .help(L("Hide %@", stats.provider.displayName))
+                .transition(.opacity)
             }
             Image(systemName: "chevron.right")
                 .font(.system(size: 8, weight: .bold))

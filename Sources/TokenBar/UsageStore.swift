@@ -106,12 +106,23 @@ final class UsageStore: ObservableObject {
         if let cur = autoProvider, liveSessions.contains(where: { $0.provider == cur }) { return }   // hysteresis
         autoProvider = liveSessions.first?.provider
     }
-    /// Providers worth showing for the current window: has usage in it, or has rate-limit gauges.
-    var visibleProviders: [Provider] {
+    /// Providers the user chose to hide (popover, dashboard, totals). Alerts still fire for them.
+    @Published var hiddenProviders: Set<Provider> = Set((UserDefaults.standard.stringArray(forKey: "hiddenProviders") ?? []).compactMap(Provider.init)) {
+        didSet { UserDefaults.standard.set(hiddenProviders.map(\.rawValue).sorted(), forKey: "hiddenProviders") }
+    }
+    /// Providers that have data (usage in window or limit gauges) — before the user's hide filter.
+    var availableProviders: [Provider] {
         Provider.allCases.filter { p in
             guard let s = stats[p], s.available else { return false }
             return s.stats(window).total > 0 || !(limits[p]?.limits.isEmpty ?? true)
         }
+    }
+    /// What is actually shown: available minus hidden.
+    var visibleProviders: [Provider] { availableProviders.filter { !hiddenProviders.contains($0) } }
+    /// Hidden providers that would otherwise show (for the "hidden" chips).
+    var hiddenButAvailable: [Provider] { availableProviders.filter { hiddenProviders.contains($0) } }
+    func setHidden(_ p: Provider, _ hidden: Bool) {
+        if hidden { hiddenProviders.insert(p) } else { hiddenProviders.remove(p) }
     }
     /// Tokens shown in the menu bar: selected provider only, or the sum.
     var menuBarTokens: Int {
@@ -137,7 +148,7 @@ final class UsageStore: ObservableObject {
         guard d.object(forKey: "migrated.v1") == nil else { return }
         if let old = UserDefaults(suiteName: "dev.techit.tokenbar") {
             for (k, v) in old.dictionaryRepresentation() where k.hasPrefix("break.") || k.hasPrefix("limit.")
-                || ["window", "appearance", "showNumberInBar", "menuBarProvider"].contains(k) {
+                || ["window", "appearance", "showNumberInBar", "menuBarProvider", "hiddenProviders"].contains(k) {
                 if d.object(forKey: k) == nil { d.set(v, forKey: k) }
             }
         }
@@ -177,8 +188,9 @@ final class UsageStore: ObservableObject {
     }
 
     /// Sum across providers for the current window.
-    var totalTokens: Int { Provider.allCases.reduce(0) { $0 + (stats[$1]?.stats(window).total ?? 0) } }
-    var totalCost: Double { Provider.allCases.reduce(0) { $0 + (stats[$1]?.stats(window).cost ?? 0) } }
+    /// Totals over providers that are not hidden.
+    var totalTokens: Int { Provider.allCases.filter { !hiddenProviders.contains($0) }.reduce(0) { $0 + (stats[$1]?.stats(window).total ?? 0) } }
+    var totalCost: Double { Provider.allCases.filter { !hiddenProviders.contains($0) }.reduce(0) { $0 + (stats[$1]?.stats(window).cost ?? 0) } }
 
     func refresh() {
         guard !isRefreshing else { return }
