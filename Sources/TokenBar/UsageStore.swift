@@ -103,12 +103,12 @@ final class UsageStore: ObservableObject {
     var menuBarProvider: Provider? { menuBarMode == "auto" ? autoProvider : Provider(rawValue: menuBarMode) }
     func resolveAutoProvider() {
         guard menuBarMode == "auto" else { autoProvider = nil; return }
-        if let cur = autoProvider, liveSessions.contains(where: { $0.provider == cur }) { return }   // hysteresis
-        autoProvider = liveSessions.first?.provider
+        if let cur = autoProvider, visibleLiveSessions.contains(where: { $0.provider == cur }) { return }   // hysteresis
+        autoProvider = visibleLiveSessions.first?.provider
     }
     /// Providers the user chose to hide (popover, dashboard, totals). Alerts still fire for them.
     @Published var hiddenProviders: Set<Provider> = Set((UserDefaults.standard.stringArray(forKey: "hiddenProviders") ?? []).compactMap(Provider.init)) {
-        didSet { UserDefaults.standard.set(hiddenProviders.map(\.rawValue).sorted(), forKey: "hiddenProviders") }
+        didSet { UserDefaults.standard.set(hiddenProviders.map(\.rawValue).sorted(), forKey: "hiddenProviders"); resolveAutoProvider() }
     }
     /// Providers that have data (usage in window or limit gauges) — before the user's hide filter.
     var availableProviders: [Provider] {
@@ -119,6 +119,8 @@ final class UsageStore: ObservableObject {
     }
     /// What is actually shown: available minus hidden.
     var visibleProviders: [Provider] { availableProviders.filter { !hiddenProviders.contains($0) } }
+    /// Live sessions of providers that are not hidden.
+    var visibleLiveSessions: [LiveSession] { liveSessions.filter { !hiddenProviders.contains($0.provider) } }
     /// Hidden providers that would otherwise show (for the "hidden" chips).
     var hiddenButAvailable: [Provider] { availableProviders.filter { hiddenProviders.contains($0) } }
     func setHidden(_ p: Provider, _ hidden: Bool) {

@@ -48,7 +48,7 @@ struct DashboardView: View {
     private var content: some View {
         VStack(alignment: .leading, spacing: 18) {
             header
-            if !store.liveSessions.isEmpty { LiveSessionsView(sessions: store.liveSessions, compact: false) }
+            if !store.visibleLiveSessions.isEmpty { LiveSessionsView(sessions: store.visibleLiveSessions, compact: false) }
             chartCard
             if selectedDay != nil { dayBanner }
             HStack(alignment: .top, spacing: 14) {

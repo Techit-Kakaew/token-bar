@@ -103,7 +103,7 @@ struct PopoverView: View {
     private var cards: some View {
         VStack(spacing: 8) {
             if !store.onboarded { onboardingCard }
-            if !store.liveSessions.isEmpty { LiveSessionsView(sessions: store.liveSessions) }
+            if !store.visibleLiveSessions.isEmpty { LiveSessionsView(sessions: store.visibleLiveSessions) }
             if visibleProviders.isEmpty {
                 let anyData = Provider.allCases.contains { store.stats[$0]?.available == true }
                 VStack(alignment: .leading, spacing: 6) {
