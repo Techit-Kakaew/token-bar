@@ -99,7 +99,7 @@ All in the ⚙️ menu:
 | Daily / weekly budget | Progress row under the totals; notification at 80 % and 100 %, once per period. Amounts are list-price estimates. |
 | Break reminder | Continuous use (calls less than 15 min apart) for 90 min → "take a break" notification, repeating every 45 min. All three values adjustable. |
 | Hotkeys | Toggle the popover (default `⌥⇧T`) and open the dashboard. Carbon hotkeys, no Accessibility permission. |
-| Menu bar shows | Combined total, or one tool with its logo and limit. Toggle the number on / off. |
+| Menu bar shows | Combined total, one fixed tool (logo + tokens + limit), or **follow the live session** — the icon switches to whichever tool you are using right now and falls back to the combined view when nothing is active. |
 | Theme / Language | System / light / dark; system / English / ไทย. |
 
 ## Privacy

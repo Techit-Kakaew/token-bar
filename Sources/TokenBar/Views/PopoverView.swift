@@ -225,9 +225,11 @@ struct PopoverView: View {
                 }
             Toggle(L("Show number in menu bar"), isOn: Binding(get: { store.showNumberInBar }, set: { store.showNumberInBar = $0 }))
             Toggle(L("Claude limits (Keychain)"), isOn: Binding(get: { store.claudeLimitsEnabled }, set: { store.claudeLimitsEnabled = $0 }))
-            Picker(L("Menu bar shows"), selection: Binding(get: { store.menuBarProvider?.rawValue ?? "all" },
-                                                         set: { store.menuBarProvider = Provider(rawValue: $0) })) {
+            Picker(L("Menu bar shows"), selection: Binding(get: { store.menuBarMode.isEmpty ? "all" : store.menuBarMode },
+                                                         set: { store.menuBarMode = $0 == "all" ? "" : $0 })) {
                 Text(L("All providers")).tag("all")
+                Text(L("Follow live session")).tag("auto")
+                Divider()
                 ForEach(visibleProviders) { Text($0.displayName).tag($0.rawValue) }
             }
             Picker(L("Theme"), selection: Binding(get: { store.appearance }, set: { store.appearance = $0 })) {

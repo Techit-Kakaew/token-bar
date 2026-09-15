@@ -46,6 +46,7 @@ enum L10n {
         "Show number in menu bar": ("Show number in menu bar", "แสดงตัวเลขบน menubar"),
         "Menu bar shows": ("Menu bar shows", "แสดงบน menubar"),
         "All providers": ("All providers", "รวมทุกเจ้า"),
+        "Follow live session": ("Follow the live session", "ตาม session ที่ใช้อยู่"),
         "Theme": ("Theme", "ธีม"),
         "System": ("System", "ตามระบบ"), "Light": ("Light", "สว่าง"), "Dark": ("Dark", "มืด"),
         "Language": ("Language", "ภาษา"),

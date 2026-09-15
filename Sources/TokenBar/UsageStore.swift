@@ -93,9 +93,18 @@ final class UsageStore: ObservableObject {
     @Published var language: String = UserDefaults.standard.string(forKey: "language") ?? "system" {
         didSet { UserDefaults.standard.set(language, forKey: "language"); L10n.current = L10n.resolve(override: language) }
     }
-    /// Which provider the menu-bar item represents (nil = all combined).
-    @Published var menuBarProvider: Provider? = Provider(rawValue: UserDefaults.standard.string(forKey: "menuBarProvider") ?? "") {
-        didSet { UserDefaults.standard.set(menuBarProvider?.rawValue ?? "", forKey: "menuBarProvider") }
+    /// Menu-bar mode: "" = all combined, "auto" = follow the live session, else a Provider rawValue.
+    @Published var menuBarMode: String = UserDefaults.standard.string(forKey: "menuBarProvider") ?? "" {
+        didSet { UserDefaults.standard.set(menuBarMode, forKey: "menuBarProvider"); autoProvider = nil; resolveAutoProvider() }
+    }
+    /// Provider currently chosen by "auto" mode (sticky while it still has a live session).
+    @Published private(set) var autoProvider: Provider?
+    /// Effective provider for the menu-bar item (nil = all combined).
+    var menuBarProvider: Provider? { menuBarMode == "auto" ? autoProvider : Provider(rawValue: menuBarMode) }
+    func resolveAutoProvider() {
+        guard menuBarMode == "auto" else { autoProvider = nil; return }
+        if let cur = autoProvider, liveSessions.contains(where: { $0.provider == cur }) { return }   // hysteresis
+        autoProvider = liveSessions.first?.provider
     }
     /// Providers worth showing for the current window: has usage in it, or has rate-limit gauges.
     var visibleProviders: [Provider] {
@@ -203,6 +212,7 @@ final class UsageStore: ObservableObject {
                 self.stats = final
                 self.recentEvents = recentEv
                 self.liveSessions = live
+                self.resolveAutoProvider()
                 self.checkContextAlerts()
                 self.breaks.update(with: recentTs)
                 self.budget.update(todaySpend: self.todaySpend, weekSpend: self.weekSpend)
