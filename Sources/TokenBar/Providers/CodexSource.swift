@@ -20,6 +20,12 @@ struct CodexSource: UsageSource {
         var project = "—"
         var sessionId = file.deletingPathExtension().lastPathComponent
         var window = 0
+        var title = ""
+        forEachLine(of: file, containing: "\"user_message\"", stopWhen: { !title.isEmpty }) { obj in
+            guard let p = obj["payload"] as? [String: Any], (p["type"] as? String) == "user_message",
+                  let m = p["message"] as? String else { return }
+            let t = sessionTitle(from: m); if !t.isEmpty { title = t }
+        }
         // Both turn_context and token_count lines contain "model" or "token_count"; scan lines with either.
         forEachLine(of: file, containing: "\"type\":\"") { obj in
             guard let type = obj["type"] as? String,
@@ -57,7 +63,7 @@ struct CodexSource: UsageSource {
                 input: max(0, input - cached), output: out,
                 cacheRead: cached, cacheWrite: int(last["cache_write_input_tokens"]),
                 source: source, project: project, sessionId: sessionId,
-                contextTokens: input, contextWindow: window))
+                contextTokens: input, contextWindow: window, title: title))
         }
         return events
     }

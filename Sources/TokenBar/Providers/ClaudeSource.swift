@@ -27,9 +27,27 @@ struct ClaudeSource: UsageSource {
         }
     }
 
+    /// First real user prompt in the file (skips tool results, slash-command echoes and subagent lines).
+    static func firstPrompt(in file: URL) -> String {
+        var title = ""
+        forEachLine(of: file, containing: "\"type\":\"user\"", stopWhen: { !title.isEmpty }) { obj in
+            guard (obj["type"] as? String) == "user", obj["agentId"] == nil,
+                  let msg = obj["message"] as? [String: Any] else { return }
+            var text = ""
+            if let str = msg["content"] as? String { text = str }
+            else if let parts = msg["content"] as? [[String: Any]] {
+                text = parts.compactMap { ($0["type"] as? String) == "text" ? $0["text"] as? String : nil }.joined(separator: " ")
+            }
+            let t = sessionTitle(from: text)
+            if !t.isEmpty { title = t }
+        }
+        return title
+    }
+
     func parse(file: URL) -> [UsageEvent] {
         var events: [UsageEvent] = []
         var seen = Set<String>()
+        let title = Self.firstPrompt(in: file)
         forEachLine(of: file, containing: "\"usage\"") { obj in
             guard (obj["type"] as? String) == "assistant",
                   let msg = obj["message"] as? [String: Any],
@@ -49,7 +67,7 @@ struct ClaudeSource: UsageSource {
                 source: Self.sourceName(obj["entrypoint"] as? String),
                 project: projectName(obj["cwd"] as? String),
                 sessionId: obj["sessionId"] as? String ?? file.deletingPathExtension().lastPathComponent,
-                contextTokens: input + cr + cw))
+                contextTokens: input + cr + cw, title: title, isSubagent: obj["agentId"] != nil))
         }
         return events
     }

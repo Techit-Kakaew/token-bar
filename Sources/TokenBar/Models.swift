@@ -81,6 +81,10 @@ struct UsageEvent: Codable {
     var contextTokens: Int = 0
     /// Model context window reported by the tool (Codex), else 0 → look up by model.
     var contextWindow: Int = 0
+    /// Session title = the user's first prompt (trimmed), if known.
+    var title: String = ""
+    /// True when this call was made by a subagent inside the session (Claude `agentId`).
+    var isSubagent: Bool = false
 
     var total: Int { input + output + cacheRead + cacheWrite }
 }
@@ -116,8 +120,36 @@ struct LiveSession: Identifiable {
     let tokens: Int
     let contextTokens: Int
     let contextWindow: Int
+    let title: String
+    let subagentCalls: Int
     var contextRatio: Double { contextWindow > 0 ? Double(contextTokens) / Double(contextWindow) : 0 }
     var state: State { Date().timeIntervalSince(last) < 180 ? .active : .idle }
+    /// Last 4 chars of the session id — disambiguates same-project sessions without a title.
+    var shortId: String { String(id.split(separator: "|").last?.suffix(4) ?? "") }
+    /// Sort key: near-full context first, then active, then most recent.
+    var priority: (Int, Int, Double) { (contextRatio >= 0.8 ? 0 : 1, state == .active ? 0 : 1, -last.timeIntervalSinceReferenceDate) }
+}
+
+/// Sessions of one provider+project, for the grouped popover list.
+struct LiveGroup: Identifiable {
+    let id: String
+    let provider: Provider
+    let project: String
+    let sessions: [LiveSession]
+    var activeCount: Int { sessions.filter { $0.state == .active }.count }
+    var maxContext: Double { sessions.map(\.contextRatio).max() ?? 0 }
+    var cost: Double { sessions.reduce(0) { $0 + $1.cost } }
+    var last: Date { sessions.map(\.last).max() ?? .distantPast }
+    var priority: (Int, Int, Double) { (maxContext >= 0.8 ? 0 : 1, activeCount > 0 ? 0 : 1, -last.timeIntervalSinceReferenceDate) }
+}
+
+/// Strip command/tool noise and squash whitespace for a one-line session title.
+func sessionTitle(from raw: String, limit: Int = 60) -> String {
+    var t = raw.replacingOccurrences(of: "\n", with: " ").trimmingCharacters(in: .whitespacesAndNewlines)
+    if t.hasPrefix("<") { return "" }                // <command-name>, <local-command-stdout>, tool_result…
+    while t.contains("  ") { t = t.replacingOccurrences(of: "  ", with: " ") }
+    if t.count > limit { t = String(t.prefix(limit)).trimmingCharacters(in: .whitespaces) + "…" }
+    return t
 }
 
 struct TokenBreakdown {
@@ -203,6 +235,16 @@ extension Double {
 }
 
 extension Date {
+    /// "12s", "25m", "3h", "2d" — for tight columns.
+    var agoTiny: String {
+        let s = Int(-timeIntervalSinceNow)
+        switch s {
+        case ..<60: return "\(max(s, 0))s"
+        case ..<3600: return "\(s / 60)m"
+        case ..<86400: return "\(s / 3600)h"
+        default: return "\(s / 86400)d"
+        }
+    }
     /// "12s ago", "25m ago", "3h ago", "2d ago"
     var agoShort: String {
         let s = Int(-timeIntervalSinceNow)

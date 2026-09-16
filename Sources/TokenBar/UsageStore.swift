@@ -25,11 +25,36 @@ final class UsageStore: ObservableObject {
             let sorted = evs.sorted { $0.timestamp < $1.timestamp }
             guard let lastE = sorted.last, lastE.timestamp >= cutoff, let first = sorted.first else { return nil }
             let window = lastE.contextWindow > 0 ? lastE.contextWindow : ContextWindows.window(for: lastE.model)
+            // context = latest main-thread call (subagents have their own, smaller contexts)
+            let mainLast = sorted.last { !$0.isSubagent } ?? lastE
             return LiveSession(id: key, provider: lastE.provider, project: lastE.project, source: lastE.source, model: lastE.model,
                                started: first.timestamp, last: lastE.timestamp, calls: sorted.count,
                                cost: sorted.reduce(0) { $0 + Pricing.cost($1) }, tokens: sorted.reduce(0) { $0 + $1.total },
-                               contextTokens: lastE.contextTokens, contextWindow: window)
-        }.sorted { $0.last > $1.last }
+                               contextTokens: mainLast.contextTokens, contextWindow: window,
+                               title: sorted.first(where: { !$0.title.isEmpty })?.title ?? "",
+                               subagentCalls: sorted.filter(\.isSubagent).count)
+        }.sorted { $0.priority < $1.priority }
+    }
+
+    /// Group visible live sessions by provider + project, most important first.
+    var liveGroups: [LiveGroup] {
+        var g: [String: [LiveSession]] = [:]
+        for s in visibleLiveSessions { g["\(s.provider.rawValue)|\(s.project)", default: []].append(s) }
+        return g.map { LiveGroup(id: $0.key, provider: $0.value[0].provider, project: $0.value[0].project,
+                                 sessions: $0.value.sorted { $0.priority < $1.priority }) }
+            .sorted { $0.priority < $1.priority }
+    }
+
+    // Live-session list preferences
+    @Published var liveCollapsed: Bool = UserDefaults.standard.bool(forKey: "live.collapsed") {
+        didSet { UserDefaults.standard.set(liveCollapsed, forKey: "live.collapsed") }
+    }
+    @Published var liveShowTitles: Bool = UserDefaults.standard.object(forKey: "live.titles") as? Bool ?? true {
+        didSet { UserDefaults.standard.set(liveShowTitles, forKey: "live.titles") }
+    }
+    /// Rows shown before "+N more" (0 = all).
+    @Published var liveMaxRows: Int = UserDefaults.standard.object(forKey: "live.maxRows") as? Int ?? 3 {
+        didSet { UserDefaults.standard.set(liveMaxRows, forKey: "live.maxRows") }
     }
 
     private func checkContextAlerts() {

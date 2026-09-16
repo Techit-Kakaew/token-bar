@@ -109,3 +109,34 @@ final class LiveSessionTests: XCTestCase {
         XCTAssertEqual(ContextWindows.window(for: "mystery"), 200_000)
     }
 }
+
+final class SessionTitleTests: XCTestCase {
+    func testTitleCleanup() {
+        XCTAssertEqual(sessionTitle(from: "  fix   the\nlogin bug  "), "fix the login bug")
+        XCTAssertEqual(sessionTitle(from: "<command-name>/clear</command-name>"), "", "slash-command echoes are not titles")
+        XCTAssertEqual(sessionTitle(from: String(repeating: "a", count: 80), limit: 10), "aaaaaaaaaa…")
+    }
+
+    func testClaudeFixtureTitleAndGrouping() {
+        let url = URL(fileURLWithPath: #filePath).deletingLastPathComponent().appendingPathComponent("Fixtures/claude.jsonl")
+        let ev = ClaudeSource().parse(file: url)
+        XCTAssertEqual(ev.first?.title, "hi")
+        // two sessions in one project group together, sorted with near-full context first
+        let now = Date()
+        func e(_ sid: String, ctx: Int, ago: Double) -> UsageEvent {
+            UsageEvent(provider: .codex, timestamp: now.addingTimeInterval(-ago), model: "gpt-5.4", input: 1, output: 1, cacheRead: 0, cacheWrite: 0,
+                       source: "VS Code", project: "codex-project", sessionId: sid, contextTokens: ctx, contextWindow: 100_000, title: "t\(sid)")
+        }
+        let live = UsageStore.buildLiveSessions([e("a", ctx: 10_000, ago: 10), e("b", ctx: 90_000, ago: 600), e("c", ctx: 20_000, ago: 60)], now: now)
+        XCTAssertEqual(live.map(\.shortId), ["b", "a", "c"], "≥80% context first, then active by recency")
+    }
+}
+
+final class L10nTests: XCTestCase {
+    /// A duplicate key crashes Dictionary(dictionaryLiteral:) at first use — keep this compiling the table once.
+    func testTableLoadsAndHasBothLanguages() {
+        XCTAssertGreaterThan(L10n.table.count, 50)
+        for (k, v) in L10n.table { XCTAssertFalse(v.0.isEmpty, k); XCTAssertFalse(v.1.isEmpty, k) }
+        XCTAssertEqual(L("Today"), L10n.current == .th ? "วันนี้" : "Today")
+    }
+}

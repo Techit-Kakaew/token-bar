@@ -252,6 +252,13 @@ struct PopoverView: View {
                 }
             Toggle(L("Show number in menu bar"), isOn: Binding(get: { store.showNumberInBar }, set: { store.showNumberInBar = $0 }))
             Toggle(L("Claude limits (Keychain)"), isOn: Binding(get: { store.claudeLimitsEnabled }, set: { store.claudeLimitsEnabled = $0 }))
+            Menu(L("Live sessions")) {
+                Toggle(L("Show session titles"), isOn: Binding(get: { store.liveShowTitles }, set: { store.liveShowTitles = $0 }))
+                Picker(L("Rows before “more”"), selection: Binding(get: { store.liveMaxRows }, set: { store.liveMaxRows = $0 })) {
+                    ForEach([3, 5, 8], id: \.self) { Text("\($0)").tag($0) }
+                    Text(L("All")).tag(0)
+                }
+            }
             Menu(L("Hidden providers")) {
                 ForEach(store.availableProviders) { p in
                     Toggle(p.displayName, isOn: Binding(get: { store.hiddenProviders.contains(p) }, set: { store.setHidden(p, $0) }))

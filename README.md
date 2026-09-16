@@ -25,7 +25,7 @@
 - **Usage at a glance** — tokens and list-price cost for Today / 7d / 30d / All, split into input, output, cache read and cache write, with a 14-day sparkline per tool.
 - **Rate limits** — Claude 5-hour and weekly windows (incl. per-model weekly), Codex 5-hour and weekly, with reset countdown and clock time.
 - **Where it came from** — usage attributed to source (Terminal, Claude Desktop, Zed, VS Code, …) and to project folder.
-- **Live sessions** — conversations active in the last 15 minutes with project, source, model, calls, cost, duration and a **context-window gauge** (how full the model's context is); notification at 80 % so you can `/compact` before it auto-compacts.
+- **Live sessions** — conversations active in the last 15 minutes, named by their first prompt, grouped per project (`codex-project ×3`), sorted near-full-context → active → idle, with a **context-window gauge**; notification at 80 % so you can `/compact` before it auto-compacts. Subagent calls fold into their parent session. Collapsible, top 3 groups + "more" (⚙️ → Live sessions).
 - **Dashboard window** — 30-day stacked chart, top projects / models / sources; click a bar to drill into one day.
 - **Alerts** — limit thresholds (80 % / 95 %), daily and weekly spend budgets, and a break reminder after long continuous use.
 - **Menu bar, your way** — combined total or a single tool (its logo + tokens + worst limit); amber / red when a limit is close.

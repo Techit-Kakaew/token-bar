@@ -39,7 +39,7 @@ final class FileCache {
         let base = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first!
             .appendingPathComponent(Bundle.main.bundleIdentifier ?? "dev.techit.tokenbar.app", isDirectory: true)
         try? FileManager.default.createDirectory(at: base, withIntermediateDirectories: true)
-        return base.appendingPathComponent("parse-cache-v2.json")
+        return base.appendingPathComponent("parse-cache-v3.json")
     }()
 
     init(persistent: Bool = true) {
@@ -100,7 +100,7 @@ func int(_ v: Any?) -> Int {
 }
 
 /// Iterate lines of a (possibly large) file without loading everything as String.
-func forEachLine(of url: URL, containing needle: String, _ body: ([String: Any]) -> Void) {
+func forEachLine(of url: URL, containing needle: String, stopWhen: (() -> Bool)? = nil, _ body: ([String: Any]) -> Void) {
     guard let data = try? Data(contentsOf: url, options: .mappedIfSafe) else { return }
     let needleBytes = Array(needle.utf8)
     data.withUnsafeBytes { (raw: UnsafeRawBufferPointer) in
@@ -115,6 +115,7 @@ func forEachLine(of url: URL, containing needle: String, _ body: ([String: Any])
                     if contains(slice, needleBytes),
                        let obj = try? JSONSerialization.jsonObject(with: Data(slice)) as? [String: Any] {
                         body(obj)
+                        if stopWhen?() == true { return }
                     }
                 }
                 start = i + 1
