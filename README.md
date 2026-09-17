@@ -47,7 +47,7 @@ xattr -cr /Applications/TokenBar.app && codesign --force --deep --sign - /Applic
 If macOS still blocks it (macOS 15+ removed the right-click → Open bypass), go to
 **System Settings → Privacy & Security**, scroll down and click **Open Anyway**.
 
-**Updating**: TokenBar checks GitHub once a day. When a new version exists a badge appears in the popover footer —
+**Updating**: TokenBar checks GitHub every 6 hours. When a new version exists you get a notification (once per version) and a badge in the popover footer —
 one click downloads the `.dmg`, verifies its SHA-256 against the release, swaps the app bundle in place, clears
 quarantine, re-signs and relaunches. No Terminal needed after the first install.
 

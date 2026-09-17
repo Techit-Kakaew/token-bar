@@ -1,4 +1,5 @@
 import SwiftUI
+import UserNotifications
 
 
 struct TokenBarApp: App {
@@ -6,6 +7,7 @@ struct TokenBarApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var delegate
 
     var body: some Scene {
+        let _ = { AppDelegate.onUpdateTapped = { [store] in Task { @MainActor in await store.updates.installUpdate() } } }()
         MenuBarExtra {
             PopoverView().environmentObject(store)
         } label: {
@@ -47,9 +49,24 @@ extension TokenBarApp {
     }
 }
 
-final class AppDelegate: NSObject, NSApplicationDelegate {
+final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDelegate {
+    /// Set by the App so a tapped update notification can start the install.
+    static var onUpdateTapped: (() -> Void)?
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)   // no Dock icon even when run from `swift run`
+        if Bundle.main.bundleIdentifier != nil { UNUserNotificationCenter.current().delegate = self }
+    }
+
+    func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse) async {
+        if response.notification.request.identifier == UpdateChecker.notificationId {
+            await MainActor.run { Self.onUpdateTapped?() }
+        }
+    }
+
+    /// Show our notifications even while the popover is frontmost.
+    func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification) async -> UNNotificationPresentationOptions {
+        [.banner, .sound, .list]
     }
 }
 

@@ -1,6 +1,7 @@
 import Foundation
 import AppKit
 import CryptoKit
+import UserNotifications
 
 /// Compares the running version with the latest GitHub release and can install it in place:
 /// download .dmg → verify sha256 (from the release's .sha256 asset) → mount → swap the app bundle →
@@ -20,10 +21,26 @@ final class UpdateChecker: ObservableObject {
 
     var current: String { Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0" }
 
+    /// Silent check on launch and every 6 h; notifies once per new version.
     func autoCheck() {
         let last = UserDefaults.standard.object(forKey: "update.lastCheck") as? Date ?? .distantPast
-        guard Date().timeIntervalSince(last) > 86400 else { return }
-        Task { await check(manual: false) }
+        guard Date().timeIntervalSince(last) > 6 * 3600 else { return }
+        Task {
+            if await check(manual: false), let v = latest { notifyIfNew(v) }
+        }
+    }
+
+    nonisolated static let notificationId = "tokenbar.update"
+
+    private func notifyIfNew(_ v: String) {
+        guard Bundle.main.bundleIdentifier != nil,
+              UserDefaults.standard.string(forKey: "update.notified") != v else { return }
+        UserDefaults.standard.set(v, forKey: "update.notified")
+        let c = UNMutableNotificationContent()
+        c.title = L("update.available %@", v)
+        c.body = L("update.notif.body")
+        c.sound = nil
+        UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: Self.notificationId, content: c, trigger: nil))
     }
 
     /// Fetches the latest release; `force` treats it as newer regardless of version (testing).
