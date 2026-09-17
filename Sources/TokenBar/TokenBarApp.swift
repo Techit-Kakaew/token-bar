@@ -53,28 +53,54 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 }
 
-/// Custom template icon from Resources/MenuBarIcon(@2x).png. Falls back to an SF Symbol if missing.
+/// Menu-bar template icon, drawn as vectors at render time so it is crisp at every scale
+/// (loading the 1× PNG and scaling it blurred on Retina). Same shape as scripts/make_icon.swift.
 enum MenuBarIcon {
-    /// Resolved resource URL (nil → SF Symbol fallback).
+    /// Kept for --icon diagnostics and the resource-bundle lookup used by ProviderLogo.
     static let url: URL? = {
-        // Hand-made .app: bundle lives in Contents/Resources. `swift run`: use Bundle.module.
         if let res = Bundle.main.resourceURL,
            let b = Bundle(url: res.appendingPathComponent("TokenBar_TokenBar.bundle")),
            let u = b.url(forResource: "MenuBarIcon", withExtension: "png") { return u }
-        let fm = FileManager.default
         let exe = Bundle.main.executableURL?.deletingLastPathComponent()
         if let b = exe.flatMap({ Bundle(url: $0.appendingPathComponent("TokenBar_TokenBar.bundle")) }),
-           let u = b.url(forResource: "MenuBarIcon", withExtension: "png"), fm.fileExists(atPath: u.path) { return u }
+           let u = b.url(forResource: "MenuBarIcon", withExtension: "png") { return u }
         return nil
     }()
 
     static let image: NSImage = {
-        if let url, let img = NSImage(contentsOf: url) {
-            img.isTemplate = true            // lets macOS tint for light/dark menu bar
-            img.size = NSSize(width: 18, height: 18)
-            return img
+        let size = NSSize(width: 18, height: 18)
+        let img = NSImage(size: size, flipped: false) { rect in
+            guard let g = NSGraphicsContext.current?.cgContext else { return false }
+            g.setShouldAntialias(true)
+            g.setStrokeColor(NSColor.black.cgColor)
+            g.setFillColor(NSColor.black.cgColor)
+            let s = rect.width
+            let c = CGPoint(x: rect.midX, y: rect.midY)
+            // hexagon outline (pointy top)
+            let r = s / 2 - 1.4
+            let hex = CGMutablePath()
+            for i in 0..<6 {
+                let a = CGFloat(i) * .pi / 3 + .pi / 6
+                let p = CGPoint(x: c.x + r * cos(a), y: c.y + r * sin(a))
+                i == 0 ? hex.move(to: p) : hex.addLine(to: p)
+            }
+            hex.closeSubpath()
+            g.setLineWidth(1.6); g.setLineJoin(.round)
+            g.addPath(hex); g.strokePath()
+            // three rising bars
+            let barW: CGFloat = 2.2, gap: CGFloat = 1.6
+            let heights: [CGFloat] = [4, 6.5, 9]
+            var x = c.x - (barW * 3 + gap * 2) / 2
+            let baseY = c.y - 4.5
+            for h in heights {
+                g.addPath(CGPath(roundedRect: CGRect(x: x, y: baseY, width: barW, height: h), cornerWidth: 0.8, cornerHeight: 0.8, transform: nil))
+                g.fillPath()
+                x += barW + gap
+            }
+            return true
         }
-        return NSImage(systemSymbolName: "chart.bar.fill", accessibilityDescription: nil)!
+        img.isTemplate = true
+        return img
     }()
 }
 
