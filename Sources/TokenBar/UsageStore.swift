@@ -135,11 +135,14 @@ final class UsageStore: ObservableObject {
     @Published var hiddenProviders: Set<Provider> = Set((UserDefaults.standard.stringArray(forKey: "hiddenProviders") ?? []).compactMap(Provider.init)) {
         didSet { UserDefaults.standard.set(hiddenProviders.map(\.rawValue).sorted(), forKey: "hiddenProviders"); resolveAutoProvider() }
     }
-    /// Providers that have data (usage in window or limit gauges) — before the user's hide filter.
+    /// Providers that have data (any recorded usage or limit gauges) — before the user's hide filter.
+    /// Uses lifetime usage (not just the selected window) so a provider you actually use stays
+    /// listed and shows 0 in an empty window instead of vanishing — matching how a provider with
+    /// local limit gauges (e.g. Codex) always appears.
     var availableProviders: [Provider] {
         Provider.allCases.filter { p in
             guard let s = stats[p], s.available else { return false }
-            return s.stats(window).total > 0 || !(limits[p]?.limits.isEmpty ?? true)
+            return s.stats(.all).total > 0 || !(limits[p]?.limits.isEmpty ?? true)
         }
     }
     /// What is actually shown: available minus hidden.
