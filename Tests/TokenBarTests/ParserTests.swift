@@ -140,3 +140,58 @@ final class L10nTests: XCTestCase {
         XCTAssertEqual(L("Today"), L10n.current == .th ? "วันนี้" : "Today")
     }
 }
+
+final class ArchiveTests: XCTestCase {
+    /// Folding old events into per-(model,source,project) buckets must not change any All-time number.
+    func testArchiveAggregationMatchesFullEvents() {
+        let now = Date()
+        var events: [UsageEvent] = []
+        let models = ["claude-opus-5", "claude-sonnet-5", "gpt-5.4"]
+        let sources = ["Terminal (CLI)", "Zed / Agent SDK"], projects = ["a", "b", "c"]
+        var rng = SystemRandomNumberGenerator()
+        for i in 0..<2000 {
+            let daysAgo = Double(Int.random(in: 0..<120, using: &rng)) + Double(i % 7) / 10
+            events.append(UsageEvent(provider: .claude, timestamp: now.addingTimeInterval(-daysAgo * 86400),
+                                     model: models[i % 3], input: Int.random(in: 0..<5000, using: &rng), output: Int.random(in: 0..<800, using: &rng),
+                                     cacheRead: Int.random(in: 0..<200_000, using: &rng), cacheWrite: Int.random(in: 0..<20_000, using: &rng),
+                                     source: sources[i % 2], project: projects[i % 3], sessionId: "s\(i % 40)"))
+        }
+        var full = ProviderStats(provider: .claude)
+        UsageStore.aggregate(events, into: &full)
+
+        let split = FileEvents.split(events, horizon: FileCache.horizon)
+        XCTAssertFalse(split.archive.isEmpty); XCTAssertFalse(split.recent.isEmpty)
+        var folded = ProviderStats(provider: .claude)
+        UsageStore.aggregate(split.recent, archive: split.archive, into: &folded)
+
+        for w in Window.allCases {
+            let a = full.stats(w), b = folded.stats(w)
+            XCTAssertEqual(a.input, b.input, "\(w) input"); XCTAssertEqual(a.output, b.output, "\(w) output")
+            XCTAssertEqual(a.cacheRead, b.cacheRead, "\(w) cr"); XCTAssertEqual(a.cacheWrite, b.cacheWrite, "\(w) cw")
+            XCTAssertEqual(a.calls, b.calls, "\(w) calls")
+            XCTAssertEqual(a.cost, b.cost, accuracy: 1e-6, "\(w) cost")
+            XCTAssertEqual(Set(full.sources(w).map(\.name)), Set(folded.sources(w).map(\.name)), "\(w) sources")
+            for (name, sb) in full.sources(w) {
+                let fb = folded.sources(w).first { $0.name == name }!.stats
+                XCTAssertEqual(sb.total, fb.total, "\(w) source \(name)"); XCTAssertEqual(sb.cost, fb.cost, accuracy: 1e-6)
+            }
+            for (name, pb) in full.projects(w) {
+                let fb = folded.projects(w).first { $0.name == name }!.stats
+                XCTAssertEqual(pb.total, fb.total, "\(w) project \(name)")
+            }
+        }
+        XCTAssertEqual(full.byModel.count, folded.byModel.count)
+        XCTAssertEqual(full.dailyTokens, folded.dailyTokens); XCTAssertEqual(full.lastActivity, folded.lastActivity)
+    }
+
+    func testRefoldMovesAgedEvents() {
+        let now = Date()
+        let ev = [UsageEvent(provider: .codex, timestamp: now.addingTimeInterval(-40 * 86400), model: "gpt-5.4", input: 10, output: 1, cacheRead: 0, cacheWrite: 0),
+                  UsageEvent(provider: .codex, timestamp: now, model: "gpt-5.4", input: 5, output: 1, cacheRead: 0, cacheWrite: 0)]
+        var fe = FileEvents.split(ev, horizon: now.addingTimeInterval(-60 * 86400))   // both "recent" at parse time
+        XCTAssertEqual(fe.recent.count, 2); XCTAssertTrue(fe.archive.isEmpty)
+        XCTAssertTrue(fe.refold(horizon: FileCache.horizon))                            // 40-day-old one ages out
+        XCTAssertEqual(fe.recent.count, 1); XCTAssertEqual(fe.archive.first?.input, 10)
+        XCTAssertFalse(fe.refold(horizon: FileCache.horizon), "second refold is a no-op")
+    }
+}

@@ -26,39 +26,58 @@ extension UsageSource {
     }
 }
 
-/// Per-file parse cache keyed by (path, mtime, size), persisted to ~/Library/Caches so app launch
-/// skips re-parsing unchanged logs (only files that changed since last run are read).
+/// Per-file parse cache keyed by (path, mtime, size), persisted to ~/Library/Caches. Only events inside
+/// `FileCache.horizon` (last ~31 days) are kept individually; older ones are folded into ArchiveBucket
+/// totals per (model, source, project), which is all the All-time views need. Keeps memory flat over time.
 final class FileCache {
     struct Key: Hashable, Codable { let path: String; let mtime: Date; let size: Int }
-    private struct Entry: Codable { let key: Key; let events: [UsageEvent] }
+    private struct Entry: Codable { let key: Key; var data: FileEvents }
     private var store: [String: Entry] = [:]
     private let lock = NSLock()
     private var dirty = false
+
+    /// Detail horizon: one day before the oldest window/chart bucket so every 30-day view stays exact.
+    static var horizon: Date {
+        Calendar.current.date(byAdding: .day, value: -(ProviderStats.days + 1), to: Calendar.current.startOfDay(for: Date()))!
+    }
 
     static let cacheURL: URL = {
         let base = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first!
             .appendingPathComponent(Bundle.main.bundleIdentifier ?? "dev.techit.tokenbar.app", isDirectory: true)
         try? FileManager.default.createDirectory(at: base, withIntermediateDirectories: true)
-        return base.appendingPathComponent("parse-cache-v3.json")
+        return base.appendingPathComponent("parse-cache-v4.json")
     }()
 
     init(persistent: Bool = true) {
+        if persistent { Self.removeStaleCaches() }
         guard persistent, let data = try? Data(contentsOf: Self.cacheURL),
-              let loaded = try? JSONDecoder().decode([String: Entry].self, from: data) else { return }
+              var loaded = try? JSONDecoder().decode([String: Entry].self, from: data) else { return }
+        let h = Self.horizon
+        for (k, var e) in loaded where e.data.refold(horizon: h) { loaded[k] = e; dirty = true }
         store = loaded
     }
 
-    func events(for url: URL, parse: (URL) -> [UsageEvent]) -> [UsageEvent] {
+    func events(for url: URL, parse: (URL) -> [UsageEvent]) -> FileEvents {
         let attrs = try? FileManager.default.attributesOfItem(atPath: url.path)
         let key = Key(path: url.path,
                       mtime: attrs?[.modificationDate] as? Date ?? .distantPast,
                       size: attrs?[.size] as? Int ?? 0)
         lock.lock()
-        if let e = store[url.path], e.key == key { lock.unlock(); return e.events }
+        if let e = store[url.path], e.key == key { lock.unlock(); return e.data }
         lock.unlock()
-        let ev = parse(url)
-        lock.lock(); store[url.path] = Entry(key: key, events: ev); dirty = true; lock.unlock()
-        return ev
+        // autoreleasepool: JSONSerialization temporaries from a big file are released before the next file
+        let data = autoreleasepool { FileEvents.split(parse(url), horizon: Self.horizon) }
+        lock.lock(); store[url.path] = Entry(key: key, data: data); dirty = true; lock.unlock()
+        return data
+    }
+
+    /// Delete parse caches from older schema versions (they are never read again).
+    private static func removeStaleCaches() {
+        let dir = cacheURL.deletingLastPathComponent()
+        guard let names = try? FileManager.default.contentsOfDirectory(atPath: dir.path) else { return }
+        for n in names where n.hasPrefix("parse-cache-v") && n != cacheURL.lastPathComponent {
+            try? FileManager.default.removeItem(at: dir.appendingPathComponent(n))
+        }
     }
 
     /// Write to disk if anything changed; drop entries whose files vanished.

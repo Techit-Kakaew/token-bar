@@ -238,8 +238,12 @@ final class UsageStore: ObservableObject {
                 let files = src.enumerateFiles()
                 s.available = src.isAvailable && !files.isEmpty
                 var events: [UsageEvent] = []
-                for f in files { events += cache.events(for: f) { src.parse(file: $0) } }
-                Self.aggregate(events, into: &s)
+                var archive: [ArchiveBucket] = []
+                for f in files {
+                    let fe = cache.events(for: f) { src.parse(file: $0) }
+                    events += fe.recent; archive += fe.archive
+                }
+                Self.aggregate(events, archive: archive, into: &s)
                 recent += events.lazy.map(\.timestamp).filter { $0 > dayAgo }
                 recent30 += events.filter { $0.timestamp >= monthAgo }
                 result[src.provider] = s
@@ -286,10 +290,21 @@ final class UsageStore: ObservableObject {
         }
     }
 
-    nonisolated private static func aggregate(_ events: [UsageEvent], into s: inout ProviderStats) {
+    nonisolated static func aggregate(_ events: [UsageEvent], archive: [ArchiveBucket] = [], into s: inout ProviderStats) {
         let now = Date()
         let cal = Calendar.current
         let today = cal.startOfDay(for: now)
+        // Archived totals only ever land in the All window (they are older than every other view).
+        for b in archive {
+            let e = b.asEvent
+            let cost = Pricing.cost(e)
+            var tb = TokenBreakdown()
+            tb.input = b.input; tb.output = b.output; tb.cacheRead = b.cacheRead; tb.cacheWrite = b.cacheWrite; tb.cost = cost; tb.calls = b.calls
+            s.byWindow[.all, default: TokenBreakdown()].merge(tb)
+            s.bySource[.all, default: [:]][b.source, default: TokenBreakdown()].merge(tb)
+            s.byProject[.all, default: [:]][b.project, default: TokenBreakdown()].merge(tb)
+            if s.lastActivity == nil || b.last > s.lastActivity! { s.lastActivity = b.last }
+        }
         for e in events {
             let cost = Pricing.cost(e)
             for w in Window.allCases where w.contains(e.timestamp, now: now) {

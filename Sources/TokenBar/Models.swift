@@ -89,6 +89,64 @@ struct UsageEvent: Codable {
     var total: Int { input + output + cacheRead + cacheWrite }
 }
 
+/// Token totals for events older than the detail horizon, keyed by (model, source, project).
+/// Cost is NOT stored: it is linear in tokens per model, so recomputing from these totals at
+/// aggregation time gives the same result as summing per-event costs (and honours pricing changes).
+struct ArchiveBucket: Codable, Hashable {
+    let model: String
+    let source: String
+    let project: String
+    var input = 0, output = 0, cacheRead = 0, cacheWrite = 0, calls = 0
+    var last: Date = .distantPast
+
+    var total: Int { input + output + cacheRead + cacheWrite }
+    var asEvent: UsageEvent {   // synthetic event carrying the bucket's totals, for Pricing.cost
+        UsageEvent(provider: .claude, timestamp: last, model: model, input: input, output: output,
+                   cacheRead: cacheRead, cacheWrite: cacheWrite, source: source, project: project)
+    }
+
+    mutating func add(_ e: UsageEvent) {
+        input += e.input; output += e.output; cacheRead += e.cacheRead; cacheWrite += e.cacheWrite; calls += 1
+        if e.timestamp > last { last = e.timestamp }
+    }
+}
+
+/// Parsed contents of one log file: full events inside the detail horizon, totals beyond it.
+struct FileEvents: Codable {
+    var recent: [UsageEvent] = []
+    var archive: [ArchiveBucket] = []
+
+    /// Events at or after `horizon` stay as-is; older ones fold into archive buckets.
+    static func split(_ events: [UsageEvent], horizon: Date) -> FileEvents {
+        var out = FileEvents()
+        var buckets: [String: ArchiveBucket] = [:]
+        for e in events {
+            if e.timestamp >= horizon { out.recent.append(e); continue }
+            let k = "\(e.model)|\(e.source)|\(e.project)"
+            var b = buckets[k] ?? ArchiveBucket(model: e.model, source: e.source, project: e.project)
+            b.add(e); buckets[k] = b
+        }
+        out.archive = Array(buckets.values)
+        return out
+    }
+
+    /// Re-fold events that have aged past a newer horizon (called on cache load).
+    mutating func refold(horizon: Date) -> Bool {
+        guard recent.contains(where: { $0.timestamp < horizon }) else { return false }
+        let again = Self.split(recent, horizon: horizon)
+        var buckets = Dictionary(uniqueKeysWithValues: archive.map { ("\($0.model)|\($0.source)|\($0.project)", $0) })
+        for b in again.archive {
+            let k = "\(b.model)|\(b.source)|\(b.project)"
+            if var cur = buckets[k] {
+                cur.input += b.input; cur.output += b.output; cur.cacheRead += b.cacheRead; cur.cacheWrite += b.cacheWrite
+                cur.calls += b.calls; cur.last = max(cur.last, b.last); buckets[k] = cur
+            } else { buckets[k] = b }
+        }
+        recent = again.recent; archive = Array(buckets.values)
+        return true
+    }
+}
+
 /// Context-window sizes (tokens) by model-id prefix; longest prefix wins. Override via pricing.json "contextWindow".
 enum ContextWindows {
     static let table: [String: Int] = [
@@ -169,6 +227,10 @@ struct TokenBreakdown {
         cacheWrite += e.cacheWrite
         cost += c
         calls += 1
+    }
+
+    mutating func merge(_ o: TokenBreakdown) {
+        input += o.input; output += o.output; cacheRead += o.cacheRead; cacheWrite += o.cacheWrite; cost += o.cost; calls += o.calls
     }
 }
 

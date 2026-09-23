@@ -64,6 +64,33 @@ if CommandLine.arguments.contains("--notify-test") {
     RunLoop.main.run()
 }
 
+if CommandLine.arguments.contains("--verify-archive") {
+    // Parse every log once, aggregate (a) from full events and (b) recent+archive, and diff every number.
+    let sources: [UsageSource] = [ClaudeSource(), CodexSource(), GeminiSource(), ZedSource(), OpenCodeSource(), GeminiSource(provider: .qwen, dir: ".qwen")]
+    var mismatches = 0
+    for src in sources {
+        let events = src.enumerateFiles().flatMap { src.parse(file: $0) }
+        if events.isEmpty { continue }
+        var full = ProviderStats(provider: src.provider); UsageStore.aggregate(events, into: &full)
+        let fe = FileEvents.split(events, horizon: FileCache.horizon)
+        var folded = ProviderStats(provider: src.provider); UsageStore.aggregate(fe.recent, archive: fe.archive, into: &folded)
+        func check(_ label: String, _ a: TokenBreakdown, _ b: TokenBreakdown) {
+            let ok = a.input == b.input && a.output == b.output && a.cacheRead == b.cacheRead && a.cacheWrite == b.cacheWrite
+                && a.calls == b.calls && abs(a.cost - b.cost) < 1e-6
+            if !ok { mismatches += 1; print("  MISMATCH \(label): full=\(a) folded=\(b)") }
+        }
+        for w in Window.allCases {
+            check("\(src.provider.rawValue) \(w.rawValue)", full.stats(w), folded.stats(w))
+            for (n, b) in full.sources(w) { check("\(src.provider.rawValue) \(w.rawValue) source \(n)", b, folded.sources(w).first { $0.name == n }?.stats ?? TokenBreakdown()) }
+            for (n, b) in full.projects(w) { check("\(src.provider.rawValue) \(w.rawValue) project \(n)", b, folded.projects(w).first { $0.name == n }?.stats ?? TokenBreakdown()) }
+        }
+        if full.dailyTokens != folded.dailyTokens || full.lastActivity != folded.lastActivity { mismatches += 1; print("  MISMATCH daily/lastActivity") }
+        print("\(src.provider.displayName): events=\(events.count) recent=\(fe.recent.count) archived=\(events.count - fe.recent.count) → \(fe.archive.count) buckets; all-time \(full.stats(.all).total.compact) \(full.stats(.all).cost.usd) calls=\(full.stats(.all).calls)")
+    }
+    print(mismatches == 0 ? "OK: every window / source / project total identical" : "FAILED: \(mismatches) mismatches")
+    exit(mismatches == 0 ? 0 : 1)
+}
+
 if CommandLine.arguments.contains("--streak") {
     let sources: [UsageSource] = [ClaudeSource(), CodexSource(), GeminiSource(), ZedSource(), OpenCodeSource(), GeminiSource(provider: .qwen, dir: ".qwen")]
     let dayAgo = Date().addingTimeInterval(-86400)
