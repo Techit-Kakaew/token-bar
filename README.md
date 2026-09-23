@@ -77,8 +77,6 @@ and from the `rate_limits` payload in Codex session logs (updates while Codex ru
 
 ## Dashboard
 
-<img src="docs/dashboard.png" width="900" alt="TokenBar dashboard">
-
 Opens from the popover footer (or a hotkey). 7 / 14 / 30-day stacked daily chart in tokens or cost, top **projects**
 (from the working directory in the logs), **models** and **sources**, plus per-tool breakdown with limit gauges.
 Click a bar to scope everything to that day; click again or *Back* to return.
