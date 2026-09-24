@@ -5,8 +5,8 @@
     <key>CFBundleName</key><string>TokenBar</string>
     <key>CFBundleDisplayName</key><string>TokenBar</string>
     <key>CFBundleIdentifier</key><string>dev.techit.tokenbar.app</string>
-    <key>CFBundleVersion</key><string>12</string>
-    <key>CFBundleShortVersionString</key><string>0.4.6</string>
+    <key>CFBundleVersion</key><string>13</string>
+    <key>CFBundleShortVersionString</key><string>0.4.7</string>
     <key>CFBundleExecutable</key><string>TokenBar</string>
     <key>CFBundleIconFile</key><string>AppIcon</string>
     <key>CFBundleIconName</key><string>AppIcon</string>

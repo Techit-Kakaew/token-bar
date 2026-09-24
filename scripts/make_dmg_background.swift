@@ -48,7 +48,7 @@ func render(scale: CGFloat) -> NSBitmapImageRep {
     }
     text("TokenBar", CGPoint(x: W / 2, y: 340), size: 26, weight: .bold, alpha: 0.95)
     text("Drag to Applications to install", CGPoint(x: W / 2, y: 308), size: 13, weight: .regular, alpha: 0.6)
-    text("First launch: right-click → Open, or run the one-liner in README", CGPoint(x: W / 2, y: 46), size: 11, weight: .regular, alpha: 0.4)
+    text("Blocked on first launch? System Settings → Privacy & Security → Open Anyway", CGPoint(x: W / 2, y: 46), size: 11, weight: .regular, alpha: 0.4)
     NSGraphicsContext.current = nil
     return rep
 }
