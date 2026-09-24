@@ -46,10 +46,15 @@ fi
 
 if [[ "$MODE" == "--dmg" ]]; then
   DMG="dist/TokenBar-${VERSION}.dmg"
+  VOL="TokenBar"
   STAGE=$(mktemp -d)
   cp -R "$APP" "$STAGE/"
   ln -s /Applications "$STAGE/Applications"
-  cat > "$STAGE/README.txt" <<TXT
+  # window dressing: background image + Finder layout captured once by scripts/make_dmg_layout.sh
+  mkdir -p "$STAGE/.background"
+  cp Assets/dmg/background.png Assets/dmg/background@2x.png "$STAGE/.background/"
+  cp Assets/dmg/DS_Store "$STAGE/.DS_Store"
+  cat > "$STAGE/.README.txt" <<TXT
 TokenBar ${VERSION}
 Drag TokenBar.app to Applications.
 
@@ -62,8 +67,17 @@ then open it normally. If it is still blocked: System Settings →
 Privacy & Security → scroll down → "Open Anyway".
 TXT
   rm -f "$DMG"
-  hdiutil create -volname "TokenBar" -srcfolder "$STAGE" -ov -format UDZO "$DMG" >/dev/null
-  rm -rf "$STAGE"
+  RW="$STAGE.rw.dmg"
+  # build read-write first so the .DS_Store / hidden flags are honoured, then compress to the shipped image
+  hdiutil create -volname "$VOL" -srcfolder "$STAGE" -ov -format UDRW -fs HFS+ "$RW" >/dev/null
+  if command -v SetFile >/dev/null 2>&1; then
+    MNT=$(mktemp -d)
+    hdiutil attach "$RW" -nobrowse -noautoopen -mountpoint "$MNT" >/dev/null
+    SetFile -a V "$MNT/.background" "$MNT/.README.txt" 2>/dev/null || true
+    hdiutil detach "$MNT" -quiet
+  fi
+  hdiutil convert "$RW" -format UDZO -imagekey zlib-level=9 -o "$DMG" >/dev/null
+  rm -rf "$STAGE" "$RW"
   echo "dmg → $DMG ($(du -h "$DMG" | cut -f1))"
   shasum -a 256 "$DMG"
 fi

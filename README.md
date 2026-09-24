@@ -138,6 +138,9 @@ Useful flags on the built binary: `--dump` (aggregated stats), `--streak`, `--no
 **Release**: bump `CFBundleShortVersionString` / `CFBundleVersion` in `Info.plist`, commit, then
 `git tag vX.Y.Z && git push origin vX.Y.Z`. GitHub Actions builds the universal dmg and publishes the release.
 
+**DMG window**: background from `scripts/make_dmg_background.swift` → `Assets/dmg/background*.png`; icon positions come from
+`Assets/dmg/DS_Store`, captured once with Finder via `scripts/make_dmg_layout.sh` (re-run it if you move the slots).
+
 **Icons**: app icon from `Assets/AppIcon.xcassets` (regenerate with `scripts/make_appicon.swift`, compiled by `actool`
 in `build.sh`); menu-bar template icon from `scripts/make_icon.swift`; vendor logos in `Sources/TokenBar/Resources/logos/`
 (Claude, Gemini, OpenAI marks as published by [Simple Icons](https://simpleicons.org), CC0 — trademarks belong to their owners).
