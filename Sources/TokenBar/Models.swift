@@ -184,6 +184,16 @@ struct LiveSession: Identifiable {
     var state: State { Date().timeIntervalSince(last) < 180 ? .active : .idle }
     /// Last 4 chars of the session id — disambiguates same-project sessions without a title.
     var shortId: String { String(id.split(separator: "|").last?.suffix(4) ?? "") }
+    /// The tool's own session id (id is "provider|sessionId").
+    var sessionId: String { String(id.split(separator: "|", maxSplits: 1).last ?? "") }
+    /// Shell command that reopens this conversation, when the tool supports it.
+    var resumeCommand: String? {
+        switch provider {
+        case .claude: return "claude --resume \(sessionId)"
+        case .codex: return "codex resume \(sessionId)"
+        default: return nil
+        }
+    }
     /// Sort key: near-full context first, then active, then most recent.
     var priority: (Int, Int, Double) { (contextRatio >= 0.8 ? 0 : 1, state == .active ? 0 : 1, -last.timeIntervalSinceReferenceDate) }
 }

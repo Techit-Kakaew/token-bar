@@ -8,6 +8,44 @@ struct LiveSessionsView: View {
     var compact = true
     @State private var expandedGroups: Set<String> = []
     @State private var showAll = false
+    @State private var hoveredRow: String?
+    @State private var copiedRow: String?
+
+    private func copy(_ text: String, row: String) {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(text, forType: .string)
+        withAnimation(.snappy(duration: 0.15)) { copiedRow = row }
+        Task { try? await Task.sleep(for: .seconds(1.2)); await MainActor.run { if copiedRow == row { withAnimation { copiedRow = nil } } } }
+    }
+
+    /// Small ⧉ button shown on hover (turns into ✓ after a copy).
+    @ViewBuilder
+    private func copyButton(_ s: LiveSession) -> some View {
+        let done = copiedRow == s.id
+        if hoveredRow == s.id || done {
+            Button { copy(s.sessionId, row: s.id) } label: {
+                Image(systemName: done ? "checkmark" : "doc.on.doc")
+                    .font(.system(size: 9, weight: .semibold))
+                    .foregroundStyle(done ? .green : .secondary)
+                    .frame(width: 16, height: 16)
+                    .background(Circle().fill(.primary.opacity(0.08)))
+            }
+            .buttonStyle(.plain)
+            .help(L("Copy session id"))
+            .transition(.opacity)
+        }
+    }
+
+    @ViewBuilder
+    private func sessionMenu(_ s: LiveSession) -> some View {
+        Button(L("Copy session id"), systemImage: "doc.on.doc") { copy(s.sessionId, row: s.id) }
+        if let cmd = s.resumeCommand {
+            Button(L("Copy resume command"), systemImage: "terminal") { copy(cmd, row: s.id) }
+        }
+        if !s.title.isEmpty { Button(L("Copy first prompt"), systemImage: "text.quote") { copy(s.title, row: s.id) } }
+        Divider()
+        Text(s.sessionId).font(.system(size: 10, design: .monospaced))
+    }
 
     private func color(_ p: Provider) -> Color { let (r, g, b) = p.accent; return Color(red: r, green: g, blue: b) }
     private func ctxColor(_ r: Double, _ base: Color) -> Color {
@@ -132,6 +170,7 @@ struct LiveSessionsView: View {
             }
             .layoutPriority(1)
             Spacer(minLength: 6)
+            copyButton(s)
             ZStack(alignment: .leading) {
                 Capsule().fill(.primary.opacity(0.08))
                 Capsule().fill(ctxColor(s.contextRatio, c)).frame(width: max(3, 44 * CGFloat(min(s.contextRatio, 1))))
@@ -141,6 +180,9 @@ struct LiveSessionsView: View {
             Text(s.last.agoTiny).font(.system(size: 9.5, design: .monospaced)).foregroundStyle(.tertiary).frame(width: 28, alignment: .trailing)
         }
         .padding(.vertical, 2)
+        .contentShape(Rectangle())
+        .onHover { hoveredRow = $0 ? s.id : (hoveredRow == s.id ? nil : hoveredRow) }
+        .contextMenu { sessionMenu(s) }
     }
 
     // MARK: full (dashboard)
@@ -160,6 +202,7 @@ struct LiveSessionsView: View {
                     Circle().fill(s.state == .active ? .green : .gray).frame(width: 6, height: 6)
                     Text(s.state == .active ? L("active") : L("idle")).font(.system(size: 10)).foregroundStyle(s.state == .active ? .green : .secondary)
                     Text(s.last.agoShort).font(.system(size: 10, design: .monospaced)).foregroundStyle(.tertiary)
+                    copyButton(s)
                 }
                 HStack(spacing: 8) {
                     Text(L("context")).font(.system(size: 9.5)).foregroundStyle(.tertiary).frame(width: 44, alignment: .leading)
@@ -182,6 +225,9 @@ struct LiveSessionsView: View {
                 }
             }
             .padding(.vertical, 2)
+            .contentShape(Rectangle())
+            .onHover { hoveredRow = $0 ? s.id : (hoveredRow == s.id ? nil : hoveredRow) }
+            .contextMenu { sessionMenu(s) }
             if s.id != sessions.last?.id { Divider().opacity(0.3) }
         }
     }
