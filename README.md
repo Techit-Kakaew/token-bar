@@ -90,6 +90,15 @@ Markdown report for the selected window. The same outputs are available headless
 /Applications/TokenBar.app/Contents/MacOS/TokenBar --export report 30d > report.md
 ```
 
+## Remote mode
+
+<img src="docs/remote-mode.png" width="800" alt="TokenBar remote mode overlay">
+
+Driving Claude from your phone while away from the Mac? One toggle at the top of the popover (or a hotkey) keeps the
+Mac awake and covers every display with an animated "Claude is running" overlay (custom text, live-session count or
+clock). Click or press any key → Touch ID / password to exit. Auto-off after 60 min without live sessions, never
+persisted across launches. Not a security lock — and a closed-lid MacBook on battery still sleeps (macOS rule).
+
 ## Alerts, budgets, hotkeys
 
 All in the ⚙️ menu:
