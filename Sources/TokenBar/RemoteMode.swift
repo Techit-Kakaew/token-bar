@@ -106,6 +106,8 @@ final class RemoteMode: ObservableObject {
             w.orderFrontRegardless()
             overlays.append(w)
         }
+        overlays.first?.makeKey()
+        NSApp.activate(ignoringOtherApps: true)
     }
 
     private func dismissOverlays() {
@@ -115,26 +117,30 @@ final class RemoteMode: ObservableObject {
 }
 
 /// Borderless full-screen window above everything, on every Space; hosts the SwiftUI overlay.
+/// Built with the 4-argument designated initializer (the `screen:` variant chains into it, and a Swift
+/// subclass that doesn't override it traps), then positioned onto the target screen.
 final class OverlayWindow: NSWindow {
-    private let host: NSHostingView<OverlayView>
+    private var host: NSHostingView<OverlayView>?
     private weak var mode: RemoteMode?
 
-    init(screen: NSScreen, mode: RemoteMode) {
+    convenience init(screen: NSScreen, mode: RemoteMode) {
+        self.init(contentRect: screen.frame, styleMask: [.borderless], backing: .buffered, defer: false)
         self.mode = mode
-        host = NSHostingView(rootView: OverlayView(mode: mode))
-        super.init(contentRect: screen.frame, styleMask: [.borderless], backing: .buffered, defer: false, screen: screen)
+        let h = NSHostingView(rootView: OverlayView(mode: mode))
+        host = h
+        contentView = h
         level = .screenSaver
         collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
         isOpaque = true
         backgroundColor = .black
         ignoresMouseEvents = false
         hasShadow = false
-        contentView = host
+        isReleasedWhenClosed = false
         setFrame(screen.frame, display: true)
     }
 
     override var canBecomeKey: Bool { true }
-    func refresh() { host.rootView = OverlayView(mode: mode!) }
+    func refresh() { if let mode { host?.rootView = OverlayView(mode: mode) } }
 
     /// Any key/click → prompt to unlock (never a silent dismiss).
     override func keyDown(with event: NSEvent) { Task { await mode?.unlock() } }
