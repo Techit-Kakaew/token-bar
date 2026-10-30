@@ -96,7 +96,8 @@ Markdown report for the selected window. The same outputs are available headless
 
 Driving Claude from your phone while away from the Mac? One toggle at the top of the popover (or a hotkey) keeps the
 Mac awake and covers every display with an animated "Claude is running" overlay (custom text, live-session count or
-clock). Click or press any key → Touch ID / password to exit. Auto-off after 60 min without live sessions, never
+clock). Click or press any key → Touch ID / password to exit. If macOS locks the screen itself, the overlay steps aside
+and returns after you unlock. Auto-off after 60 min without live sessions, never
 persisted across launches. Not a security lock — and a closed-lid MacBook on battery still sleeps (macOS rule).
 
 ## Alerts, budgets, hotkeys

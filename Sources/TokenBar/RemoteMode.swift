@@ -27,6 +27,8 @@ final class RemoteMode: ObservableObject {
     private var overlays: [OverlayWindow] = []
     private var idleSince: Date?
     private var screenObserver: Any?
+    private var lockObservers: [Any] = []
+    private var hiddenForSystemLock = false
     var liveSessionProvider: () -> [LiveSession] = { [] }
 
     // MARK: toggle
@@ -42,8 +44,18 @@ final class RemoteMode: ObservableObject {
         idleSince = nil
         if showOverlay { presentOverlays() }
         screenObserver = NotificationCenter.default.addObserver(forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main) { [weak self] _ in
-            Task { @MainActor in if self?.isOn == true, self?.showOverlay == true { self?.presentOverlays() } }
+            Task { @MainActor in if self?.isOn == true, self?.showOverlay == true, self?.hiddenForSystemLock == false { self?.presentOverlays() } }
         }
+        // macOS lock screen already covers everything: hide our overlay while locked, bring it back on unlock.
+        let dnc = DistributedNotificationCenter.default()
+        lockObservers = [
+            dnc.addObserver(forName: Notification.Name("com.apple.screenIsLocked"), object: nil, queue: .main) { [weak self] _ in
+                Task { @MainActor in guard let self, self.isOn else { return }; self.hiddenForSystemLock = true; self.dismissOverlays() }
+            },
+            dnc.addObserver(forName: Notification.Name("com.apple.screenIsUnlocked"), object: nil, queue: .main) { [weak self] _ in
+                Task { @MainActor in guard let self, self.isOn else { return }; self.hiddenForSystemLock = false; if self.showOverlay { self.presentOverlays() } }
+            },
+        ]
     }
 
     func turnOff(reason: String? = nil) {
@@ -51,6 +63,9 @@ final class RemoteMode: ObservableObject {
         if assertion != 0 { IOPMAssertionRelease(assertion); assertion = 0 }
         dismissOverlays()
         if let o = screenObserver { NotificationCenter.default.removeObserver(o); screenObserver = nil }
+        lockObservers.forEach { DistributedNotificationCenter.default().removeObserver($0) }
+        lockObservers.removeAll()
+        hiddenForSystemLock = false
         isOn = false
         if let reason, Bundle.main.bundleIdentifier != nil {
             let c = UNMutableNotificationContent(); c.title = L("remote.off.title"); c.body = reason
