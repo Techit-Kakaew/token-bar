@@ -91,6 +91,22 @@ if CommandLine.arguments.contains("--verify-archive") {
     exit(mismatches == 0 ? 0 : 1)
 }
 
+if let i = CommandLine.arguments.firstIndex(of: "--snapshot-overlay"), i + 1 < CommandLine.arguments.count {
+    let out = URL(fileURLWithPath: CommandLine.arguments[i + 1])
+    Task { @MainActor in
+        let m = RemoteMode()
+        if let t = ProcessInfo.processInfo.environment["TOKENBAR_OVERLAY_TEXT"] { m.overlayText = t }
+        m.liveSessionProvider = { [LiveSession(id: "claude|x", provider: .claude, project: "p", source: "s", model: "m", started: Date(), last: Date(),
+                                               calls: 1, cost: 0, tokens: 0, contextTokens: 0, contextWindow: 1, title: "", subagentCalls: 0)] }
+        let r = ImageRenderer(content: OverlayView(mode: m).frame(width: 1440, height: 900)); r.scale = 1
+        if let img = r.nsImage, let tiff = img.tiffRepresentation, let png = NSBitmapImageRep(data: tiff)?.representation(using: .png, properties: [:]) {
+            try? png.write(to: out); print("wrote \(out.path)")
+        }
+        exit(0)
+    }
+    RunLoop.main.run()
+}
+
 if CommandLine.arguments.contains("--streak") {
     let sources: [UsageSource] = [ClaudeSource(), CodexSource(), GeminiSource(), ZedSource(), OpenCodeSource(), GeminiSource(provider: .qwen, dir: ".qwen")]
     let dayAgo = Date().addingTimeInterval(-86400)

@@ -74,6 +74,10 @@ final class UsageStore: ObservableObject {
     let updates = UpdateChecker()
     let budget = Budget()
     let hotkeys = HotKeys()
+    let remote = RemoteMode()
+    @Published var hotkeyRemote: String = UserDefaults.standard.string(forKey: "hotkey.remote") ?? "Off" {
+        didSet { UserDefaults.standard.set(hotkeyRemote, forKey: "hotkey.remote"); bindHotkeys() }
+    }
 
     @Published var hotkeyPopover: String = UserDefaults.standard.string(forKey: "hotkey.popover") ?? "⌥⇧T" {
         didSet { UserDefaults.standard.set(hotkeyPopover, forKey: "hotkey.popover"); bindHotkeys() }
@@ -87,6 +91,10 @@ final class UsageStore: ObservableObject {
     func bindHotkeys() {
         hotkeys.bind(id: 1, combo: .named(hotkeyPopover)) { HotKeys.toggleStatusItem() }
         hotkeys.bind(id: 2, combo: .named(hotkeyDashboard)) { [weak self] in self?.openDashboard?(); NSApp.activate(ignoringOtherApps: true) }
+        hotkeys.bind(id: 3, combo: .named(hotkeyRemote)) { [weak self] in
+            guard let self else { return }
+            if self.remote.isOn { Task { await self.remote.unlock() } } else { self.remote.turnOn() }
+        }
     }
 
     var todaySpend: Double { Provider.allCases.reduce(0) { $0 + (stats[$1]?.stats(.today).cost ?? 0) } }
@@ -209,6 +217,8 @@ final class UsageStore: ObservableObject {
         alerts.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() }.store(in: &bag)
         updates.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() }.store(in: &bag)
         budget.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() }.store(in: &bag)
+        remote.liveSessionProvider = { [weak self] in self?.visibleLiveSessions ?? [] }
+        remote.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() }.store(in: &bag)
         bindHotkeys()
         refresh()
         updates.autoCheck()
@@ -260,6 +270,7 @@ final class UsageStore: ObservableObject {
                 self.liveSessions = live
                 self.resolveAutoProvider()
                 self.checkContextAlerts()
+                self.remote.tick(liveSessions: self.visibleLiveSessions)
                 self.breaks.update(with: recentTs)
                 self.budget.update(todaySpend: self.todaySpend, weekSpend: self.weekSpend)
                 self.limits[.codex] = codexLimits

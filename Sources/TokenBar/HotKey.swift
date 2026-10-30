@@ -13,6 +13,8 @@ final class HotKeys {
             Combo(key: UInt32(kVK_ANSI_T), mods: UInt32(controlKey | optionKey), label: "⌃⌥T"),
             Combo(key: UInt32(kVK_ANSI_T), mods: UInt32(cmdKey | shiftKey), label: "⌘⇧T"),
             Combo(key: UInt32(kVK_Space), mods: UInt32(optionKey | shiftKey), label: "⌥⇧Space"),
+            Combo(key: UInt32(kVK_ANSI_R), mods: UInt32(optionKey | shiftKey), label: "⌥⇧R"),
+            Combo(key: UInt32(kVK_ANSI_L), mods: UInt32(cmdKey | optionKey), label: "⌘⌥L"),
         ]
         static func named(_ l: String) -> Combo { presets.first { $0.label == l } ?? .off }
     }

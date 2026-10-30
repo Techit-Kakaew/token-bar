@@ -74,6 +74,28 @@ struct PopoverView: View {
         .padding(.horizontal, 4).padding(.top, 2)
     }
 
+    /// One-tap Remote mode: keeps the Mac awake and covers the screens while you drive it from your phone.
+    private var remoteRow: some View {
+        let on = store.remote.isOn
+        let accent = Color(red: 0.45, green: 0.60, blue: 1.0)
+        return HStack(spacing: 10) {
+            Image(systemName: on ? "iphone.radiowaves.left.and.right" : "iphone")
+                .font(.system(size: 13, weight: .semibold)).foregroundStyle(on ? accent : .secondary).frame(width: 18)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(L("Remote mode")).font(.system(size: 12, weight: .semibold))
+                Text(on ? L("remote.on.hint") : L("remote.off.hint")).font(.system(size: 10)).foregroundStyle(.tertiary).lineLimit(1)
+            }
+            Spacer()
+            if !isSnapshot {
+                Toggle("", isOn: Binding(get: { on }, set: { $0 ? store.remote.turnOn() : store.remote.turnOff() }))
+                    .toggleStyle(.switch).controlSize(.small).labelsHidden()
+            }
+        }
+        .padding(.horizontal, 10).padding(.vertical, 6)
+        .glassCard(accent: on ? accent : nil, radius: 8)
+        .help(L("remote.help"))
+    }
+
     private var onboardingCard: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 8) {
@@ -103,6 +125,7 @@ struct PopoverView: View {
     private var cards: some View {
         VStack(spacing: 8) {
             if !store.onboarded { onboardingCard }
+            remoteRow
             if !store.visibleLiveSessions.isEmpty { LiveSessionsView(sessions: store.visibleLiveSessions) }
             if visibleProviders.isEmpty {
                 let anyData = Provider.allCases.contains { store.stats[$0]?.available == true }
@@ -293,6 +316,21 @@ struct PopoverView: View {
             Picker(L("Hotkey: dashboard"), selection: Binding(get: { store.hotkeyDashboard }, set: { store.hotkeyDashboard = $0 })) {
                 ForEach(HotKeys.Combo.presets, id: \.label) { Text($0.label == "Off" ? L("Off") : $0.label).tag($0.label) }
             }
+            Picker(L("Hotkey: remote"), selection: Binding(get: { store.hotkeyRemote }, set: { store.hotkeyRemote = $0 })) {
+                ForEach(HotKeys.Combo.presets, id: \.label) { Text($0.label == "Off" ? L("Off") : $0.label).tag($0.label) }
+            }
+            Divider()
+            Menu(L("Remote mode")) {
+                Toggle(L("remote.overlay"), isOn: Binding(get: { store.remote.showOverlay }, set: { store.remote.showOverlay = $0 }))
+                Picker(L("remote.subtitle"), selection: Binding(get: { store.remote.subtitleMode }, set: { store.remote.subtitleMode = $0 })) {
+                    Text(L("remote.sub.sessions")).tag("sessions"); Text(L("remote.sub.clock")).tag("clock"); Text(L("None")).tag("none")
+                }
+                Picker(L("remote.autooff"), selection: Binding(get: { store.remote.autoOffMinutes }, set: { store.remote.autoOffMinutes = $0 })) {
+                    ForEach([30, 60, 120, 240], id: \.self) { Text(L("%d min", $0)).tag($0) }
+                    Text(L("Never")).tag(0)
+                }
+                Button(L("remote.edittext")) { editOverlayText() }
+            }
             Divider()
             Picker(L("Limit alert at"), selection: Binding(get: { store.alerts.warnPercent }, set: { store.alerts.warnPercent = $0 })) {
                 Text(L("Off (95% only)")).tag(0)
@@ -352,6 +390,18 @@ struct PopoverView: View {
         case .verifying: Text(L("update.verifying")).font(.system(size: 10)).foregroundStyle(.secondary)
         case .installing: Text(L("update.installing")).font(.system(size: 10)).foregroundStyle(.secondary)
         case .relaunching: Text(L("update.relaunching")).font(.system(size: 10)).foregroundStyle(.secondary)
+        }
+    }
+
+    /// Small NSAlert with a text field for the overlay headline.
+    private func editOverlayText() {
+        NSApp.activate(ignoringOtherApps: true)
+        let a = NSAlert(); a.messageText = L("remote.edittext"); a.informativeText = L("remote.edittext.info")
+        let tf = NSTextField(frame: NSRect(x: 0, y: 0, width: 300, height: 24)); tf.stringValue = store.remote.overlayText
+        a.accessoryView = tf; a.addButton(withTitle: "OK"); a.addButton(withTitle: L("Later"))
+        if a.runModal() == .alertFirstButtonReturn {
+            let t = tf.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+            store.remote.overlayText = t.isEmpty ? "Claude is running" : t
         }
     }
 
