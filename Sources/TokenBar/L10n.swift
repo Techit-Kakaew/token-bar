@@ -35,6 +35,8 @@ enum L10n {
         "limits: %@": ("limits: %@", "limit: %@"),
         "est. cost": ("est. cost", "ค่าใช้จ่ายประมาณ"),
         "tokens · %d calls": ("tokens · %d calls", "tokens · %d ครั้ง"),
+    "%d unpriced calls": ("%d unpriced calls", "%d ครั้งยังไม่มีราคา"),
+    "unpriced.help": ("Model not in the pricing table — tokens are counted, cost is excluded. Add it to ~/.config/tokenbar/pricing.json.", "โมเดลนี้ไม่อยู่ในตารางราคา นับ token แต่ไม่รวมค่าใช้จ่าย เพิ่มได้ที่ ~/.config/tokenbar/pricing.json"),
         "SOURCES": ("SOURCES", "แหล่งที่มา"),
         "MODELS · LAST 30D": ("MODELS · LAST 30D", "โมเดล · 30 วันล่าสุด"),
         "in": ("in", "เข้า"), "out": ("out", "ออก"),

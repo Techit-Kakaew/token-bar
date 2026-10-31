@@ -29,7 +29,7 @@ enum Exporter {
             out += [iso.string(from: e.timestamp), day.string(from: e.timestamp), e.provider.displayName,
                     csv(e.source), csv(e.project), csv(e.model),
                     "\(e.input)", "\(e.output)", "\(e.cacheRead)", "\(e.cacheWrite)", "\(e.total)",
-                    String(format: "%.6f", Pricing.cost(e))].joined(separator: ",") + "\n"
+                    Pricing.cost(e).map { String(format: "%.6f", $0) } ?? ""].joined(separator: ",") + "\n"
         }
         return out
     }
@@ -62,16 +62,17 @@ enum Exporter {
         for p in providers {
             let b = stats[p]!.stats(window)
             total.input += b.input; total.output += b.output; total.cacheRead += b.cacheRead
-            total.cacheWrite += b.cacheWrite; total.cost += b.cost; total.calls += b.calls
-            md += "| \(p.displayName) | \(b.total.compact) | \(b.input.compact) | \(b.output.compact) | \(b.cacheRead.compact) | \(b.cacheWrite.compact) | \(b.calls) | \(b.cost.usd) |\n"
+            total.cacheWrite += b.cacheWrite; total.cost += b.cost; total.calls += b.calls; total.unpriced += b.unpriced
+            md += "| \(p.displayName) | \(b.total.compact) | \(b.input.compact) | \(b.output.compact) | \(b.cacheRead.compact) | \(b.cacheWrite.compact) | \(b.calls) | \(b.costText) |\n"
         }
-        md += "| **Total** | **\(total.total.compact)** | \(total.input.compact) | \(total.output.compact) | \(total.cacheRead.compact) | \(total.cacheWrite.compact) | \(total.calls) | **\(total.cost.usd)** |\n\n"
+        md += "| **Total** | **\(total.total.compact)** | \(total.input.compact) | \(total.output.compact) | \(total.cacheRead.compact) | \(total.cacheWrite.compact) | \(total.calls) | **\(total.costText)** |\n\n"
+        if total.unpriced > 0 { md += "_\(total.unpriced) calls use models with no pricing row; their cost is excluded (add them to `~/.config/tokenbar/pricing.json`)._\n\n" }
 
         func section(_ title: String, _ rows: [(String, Provider, TokenBreakdown)]) {
             guard !rows.isEmpty else { return }
             md += "## \(title)\n\n| Name | Provider | Tokens | Est. cost |\n|---|---|---:|---:|\n"
             for (n, p, b) in rows.sorted(by: { $0.2.total > $1.2.total }).prefix(15) {
-                md += "| \(n) | \(p.displayName) | \(b.total.compact) | \(b.cost.usd) |\n"
+                md += "| \(n) | \(p.displayName) | \(b.total.compact) | \(b.costText) |\n"
             }
             md += "\n"
         }

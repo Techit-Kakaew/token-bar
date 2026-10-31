@@ -81,6 +81,10 @@ struct DashboardView: View {
                     Text(L("tokens")).font(.system(size: 14)).foregroundStyle(.tertiary)
                     Text("≈ \(store.totalCost.usd)").font(.system(size: 22, weight: .bold, design: .rounded)).foregroundStyle(.secondary)
                 }
+                if store.unpricedCalls > 0 {
+                    Text(L("%d unpriced calls", store.unpricedCalls)).font(.system(size: 11)).foregroundStyle(.orange)
+                        .help(L("unpriced.help"))
+                }
             }
             Spacer()
             HStack(spacing: 10) {
@@ -90,7 +94,7 @@ struct DashboardView: View {
                         Circle().fill(color(p)).frame(width: 8, height: 8)
                         Text(p.displayName).font(.system(size: 12, weight: .medium))
                         Text(b.total.compact).font(.system(size: 12, design: .monospaced)).foregroundStyle(.secondary)
-                        Text(b.cost.usd).font(.system(size: 12, weight: .semibold, design: .monospaced)).foregroundStyle(color(p))
+                        Text(b.costText).font(.system(size: 12, weight: .semibold, design: .monospaced)).foregroundStyle(color(p))
                     }
                     .padding(.horizontal, 10).padding(.vertical, 6)
                     .glassCard(accent: color(p), radius: 14)
@@ -226,7 +230,7 @@ struct DashboardView: View {
     private var dayBanner: some View {
         let ev = dayEvents
         let total = ev.reduce(0) { $0 + $1.total }
-        let cost = ev.reduce(0.0) { $0 + Pricing.cost($1) }
+        let cost = ev.reduce(0.0) { $0 + (Pricing.cost($1) ?? 0) }
         return HStack(spacing: 12) {
             Image(systemName: "calendar").foregroundStyle(.secondary)
             Text(dayLabel).font(.system(size: 13, weight: .semibold))
@@ -282,7 +286,7 @@ struct DashboardView: View {
             for (name, b) in pick(s) {
                 var cur = acc[name] ?? (TokenBreakdown(), [])
                 cur.0.input += b.input; cur.0.output += b.output; cur.0.cacheRead += b.cacheRead
-                cur.0.cacheWrite += b.cacheWrite; cur.0.cost += b.cost; cur.0.calls += b.calls
+                cur.0.cacheWrite += b.cacheWrite; cur.0.cost += b.cost; cur.0.calls += b.calls; cur.0.unpriced += b.unpriced
                 cur.1.insert(p)
                 acc[name] = cur
             }
@@ -316,7 +320,7 @@ struct DashboardView: View {
                                 Text(r.name).font(.system(size: 12, weight: .medium)).lineLimit(1).truncationMode(.middle)
                                 Spacer()
                                 Text(r.stats.total.compact).font(.system(size: 11.5, design: .monospaced)).foregroundStyle(.secondary)
-                                Text(r.stats.cost.usd).font(.system(size: 11.5, weight: .semibold, design: .monospaced))
+                                Text(r.stats.costText).font(.system(size: 11.5, weight: .semibold, design: .monospaced))
                                     .foregroundStyle(r.provider.map(color) ?? .primary.opacity(0.7)).frame(width: 60, alignment: .trailing)
                             }
                             GeometryReader { g in

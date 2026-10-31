@@ -135,11 +135,13 @@ struct ProviderCard: View {
             }
             Spacer()
             VStack(alignment: .trailing, spacing: 2) {
-                Text(bd.cost.usd)
+                Text(bd.costText)
                     .font(.system(size: 18, weight: .semibold, design: .rounded))
                     .foregroundStyle(color)
                     .monospacedDigit()
-                Text(L("est. cost")).font(.system(size: 10.5)).foregroundStyle(.secondary)
+                Text(bd.unpriced > 0 ? L("%d unpriced calls", bd.unpriced) : L("est. cost"))
+                    .font(.system(size: 10.5)).foregroundStyle(bd.unpriced > 0 ? .orange : .secondary)
+                    .help(bd.unpriced > 0 ? L("unpriced.help") : "")
             }
             Sparkline(values: stats.daily, color: color)
                 .frame(width: 76, height: 28)
@@ -237,8 +239,9 @@ struct ProviderCard: View {
                     Text(model).font(.system(size: 11.5, design: .monospaced)).lineLimit(1)
                     Spacer()
                     Text(b.total.compact).font(.system(size: 11.5, design: .monospaced)).foregroundStyle(.secondary)
-                    Text(b.cost.usd).font(.system(size: 11.5, weight: .medium, design: .monospaced))
-                        .foregroundStyle(color).frame(width: 64, alignment: .trailing)
+                    Text(b.costText).font(.system(size: 11.5, weight: .medium, design: .monospaced))
+                        .foregroundStyle(b.unpriced > 0 ? .orange : color).frame(width: 64, alignment: .trailing)
+                        .help(b.unpriced > 0 ? L("unpriced.help") : "")
                 }
             }
         }

@@ -171,6 +171,12 @@ struct PopoverView: View {
                     .foregroundStyle(.secondary)
                     .lineLimit(1).fixedSize()
             }
+            if store.unpricedCalls > 0 {
+                Text(L("%d unpriced calls", store.unpricedCalls))
+                    .font(.system(size: 10.5)).foregroundStyle(.orange)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                    .help(L("unpriced.help"))
+            }
             streakRow
             budgetRows
         }

@@ -29,7 +29,7 @@ final class UsageStore: ObservableObject {
             let mainLast = sorted.last { !$0.isSubagent } ?? lastE
             return LiveSession(id: key, provider: lastE.provider, project: lastE.project, source: lastE.source, model: lastE.model,
                                started: first.timestamp, last: lastE.timestamp, calls: sorted.count,
-                               cost: sorted.reduce(0) { $0 + Pricing.cost($1) }, tokens: sorted.reduce(0) { $0 + $1.total },
+                               cost: sorted.reduce(0) { $0 + (Pricing.cost($1) ?? 0) }, tokens: sorted.reduce(0) { $0 + $1.total },
                                contextTokens: mainLast.contextTokens, contextWindow: window,
                                title: sorted.first(where: { !$0.title.isEmpty })?.title ?? "",
                                subagentCalls: sorted.filter(\.isSubagent).count)
@@ -230,6 +230,8 @@ final class UsageStore: ObservableObject {
     /// Sum across providers for the current window.
     /// Totals over providers that are not hidden.
     var totalTokens: Int { Provider.allCases.filter { !hiddenProviders.contains($0) }.reduce(0) { $0 + (stats[$1]?.stats(window).total ?? 0) } }
+    /// Calls in the current window (non-hidden providers) whose model has no pricing row.
+    var unpricedCalls: Int { Provider.allCases.filter { !hiddenProviders.contains($0) }.reduce(0) { $0 + (stats[$1]?.stats(window).unpriced ?? 0) } }
     var totalCost: Double { Provider.allCases.filter { !hiddenProviders.contains($0) }.reduce(0) { $0 + (stats[$1]?.stats(window).cost ?? 0) } }
 
     func refresh() {
@@ -310,7 +312,8 @@ final class UsageStore: ObservableObject {
             let e = b.asEvent
             let cost = Pricing.cost(e)
             var tb = TokenBreakdown()
-            tb.input = b.input; tb.output = b.output; tb.cacheRead = b.cacheRead; tb.cacheWrite = b.cacheWrite; tb.cost = cost; tb.calls = b.calls
+            tb.input = b.input; tb.output = b.output; tb.cacheRead = b.cacheRead; tb.cacheWrite = b.cacheWrite; tb.calls = b.calls
+            if let cost { tb.cost = cost } else { tb.unpriced = b.calls }
             s.byWindow[.all, default: TokenBreakdown()].merge(tb)
             s.bySource[.all, default: [:]][b.source, default: TokenBreakdown()].merge(tb)
             s.byProject[.all, default: [:]][b.project, default: TokenBreakdown()].merge(tb)
@@ -329,7 +332,7 @@ final class UsageStore: ObservableObject {
             let dayDiff = cal.dateComponents([.day], from: cal.startOfDay(for: e.timestamp), to: today).day ?? 99
             if dayDiff >= 0 && dayDiff < ProviderStats.days {
                 s.dailyTokens[ProviderStats.days - 1 - dayDiff] += e.total
-                s.dailyCost[ProviderStats.days - 1 - dayDiff] += cost
+                s.dailyCost[ProviderStats.days - 1 - dayDiff] += cost ?? 0
             }
             if s.lastActivity == nil || e.timestamp > s.lastActivity! { s.lastActivity = e.timestamp }
         }

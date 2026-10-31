@@ -147,7 +147,7 @@ if CommandLine.arguments.contains("--dump") {
                          b.cacheRead.compact as NSString, b.cacheWrite.compact as NSString, b.cost.usd as NSString, b.calls))
         }
         for (m, b) in models.sorted(by: { $0.value.cost > $1.value.cost }).prefix(8) {
-            print("    \(m): \(b.total.compact) \(b.cost.usd) price=\(Pricing.price(for: m) != nil)")
+            print("    \(m): \(b.total.compact) \(b.costText) price=\(Pricing.price(for: m) != nil)")
         }
     }
     exit(0)

@@ -227,20 +227,26 @@ struct TokenBreakdown {
     var cacheWrite = 0
     var cost: Double = 0
     var calls = 0
+    /// Calls whose model has no pricing row; their tokens are counted but excluded from `cost`.
+    var unpriced = 0
 
     var total: Int { input + output + cacheRead + cacheWrite }
 
-    mutating func add(_ e: UsageEvent, cost c: Double) {
+    /// "—" when every call in this breakdown is unpriced, otherwise the (partial) estimate.
+    var costText: String { unpriced > 0 && unpriced == calls ? "—" : cost.usd }
+
+    mutating func add(_ e: UsageEvent, cost c: Double?) {
         input += e.input
         output += e.output
         cacheRead += e.cacheRead
         cacheWrite += e.cacheWrite
-        cost += c
+        if let c { cost += c } else { unpriced += 1 }
         calls += 1
     }
 
     mutating func merge(_ o: TokenBreakdown) {
-        input += o.input; output += o.output; cacheRead += o.cacheRead; cacheWrite += o.cacheWrite; cost += o.cost; calls += o.calls
+        input += o.input; output += o.output; cacheRead += o.cacheRead; cacheWrite += o.cacheWrite
+        cost += o.cost; calls += o.calls; unpriced += o.unpriced
     }
 }
 

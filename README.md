@@ -126,11 +126,16 @@ All in the ⚙️ menu:
 
 Costs are **what the same tokens would cost at list price** (USD per 1M tokens, per model, with cache read / write rates),
 not what you were billed — useful for judging a subscription or comparing tools. The built-in table lives in
-`Sources/TokenBar/Pricing.swift`; override or add models in `~/.config/tokenbar/pricing.json`, matched by model-id prefix:
+`Sources/TokenBar/Pricing.swift` (Anthropic and OpenAI rows from the vendors' pricing pages, Google / Alibaba approximate);
+override or add models in `~/.config/tokenbar/pricing.json`, matched by longest model-id prefix:
 
 ```json
-{ "gpt-5.6": { "input": 1.75, "output": 14, "cacheRead": 0.175, "cacheWrite": 0 } }
+{ "gpt-5.6-sol": { "input": 4, "output": 20, "cacheRead": 0.4, "cacheWrite": 0 } }
 ```
+
+`cacheRead` / `cacheWrite` are optional: omitted they default to 10 % / 125 % of `input` (Anthropic prompt caching);
+write `"cacheWrite": 0` for vendors that do not bill cache writes. A model with no row is **unpriced** — its tokens are
+counted, its cost is shown as `—` and an "N unpriced calls" note appears next to the total (never a fabricated $0).
 
 ## Development
 

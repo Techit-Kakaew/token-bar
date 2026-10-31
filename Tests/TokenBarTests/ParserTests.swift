@@ -47,11 +47,37 @@ final class ParserTests: XCTestCase {
     func testPricingLongestPrefixAndCost() {
         XCTAssertEqual(Pricing.price(for: "claude-opus-5")?.input, 5)
         XCTAssertEqual(Pricing.price(for: "claude-fable-5-1")?.cacheRead, 0.25, "5-1 beats fable-5 prefix")
-        XCTAssertEqual(Pricing.price(for: "gpt-5.4-mini")?.input, 0.4)
+        XCTAssertEqual(Pricing.price(for: "gpt-5.4-mini")?.input, 0.75)
+        XCTAssertEqual(Pricing.price(for: "gpt-5.6-sol")?.input, 4, "gpt-5.6-sol has its own row")
+        XCTAssertEqual(Pricing.price(for: "gpt-5.6-sol")?.cacheWrite, 0, "OpenAI bills no cache write")
+        XCTAssertEqual(Pricing.price(for: "claude-opus-5")?.cacheWrite, 6.25, "Anthropic default 1.25× input")
         let e = UsageEvent(provider: .claude, timestamp: Date(), model: "claude-opus-5",
                            input: 1_000_000, output: 0, cacheRead: 0, cacheWrite: 0)
-        XCTAssertEqual(Pricing.cost(e), 5, accuracy: 0.0001)
+        XCTAssertEqual(Pricing.cost(e)!, 5, accuracy: 0.0001)
         XCTAssertNil(Pricing.price(for: "totally-unknown-model"))
+    }
+
+    func testUnpricedModelIsNotZero() {
+        let unknown = UsageEvent(provider: .opencode, timestamp: Date(), model: "deepseek-v4-pro",
+                                 input: 1_000_000, output: 1_000, cacheRead: 0, cacheWrite: 0)
+        XCTAssertNil(Pricing.cost(unknown))
+        var b = TokenBreakdown()
+        b.add(unknown, cost: Pricing.cost(unknown))
+        XCTAssertEqual(b.unpriced, 1); XCTAssertEqual(b.calls, 1); XCTAssertEqual(b.cost, 0)
+        XCTAssertEqual(b.costText, "—")
+        XCTAssertEqual(b.total, 1_001_000, "tokens still counted")
+        let csv = Exporter.eventsCSV([unknown])
+        XCTAssertTrue(csv.hasSuffix(",\n"), "cost column empty, not 0.000000: \(csv)")
+        var s = ProviderStats(provider: .opencode)
+        UsageStore.aggregate([unknown], into: &s)
+        XCTAssertEqual(s.byWindow[.today]?.unpriced, 1)
+    }
+
+    func testPricingJSONDefaultsAndOptOut() throws {
+        let json = #"{"a": {"input": 2, "output": 8}, "b": {"input": 2, "output": 8, "cacheWrite": 0}}"#.data(using: .utf8)!
+        let t = try JSONDecoder().decode([String: ModelPrice].self, from: json)
+        XCTAssertEqual(t["a"]?.cacheRead, 0.2); XCTAssertEqual(t["a"]?.cacheWrite, 2.5)
+        XCTAssertEqual(t["b"]?.cacheWrite, 0)
     }
 
     func testStreakDetection() {
